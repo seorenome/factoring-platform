@@ -3,7 +3,7 @@ import styled from 'styled-components';
 export const LayoutContainer = styled.div`
   display: flex;
   min-height: 100vh;
-  background-color: #f5f5f5; /* Clean utility style background */
+  background-color: #f5f5f5;
 `;
 
 export const Sidebar = styled.aside`
@@ -24,6 +24,11 @@ export const SidebarLogo = styled.div`
   font-weight: 700;
   color: #111827;
   padding: 0 0.5rem;
+`;
+
+export const LogoImage = styled.img`
+  width: 28px;
+  height: 28px;
 `;
 
 export const NavList = styled.nav`
@@ -59,34 +64,6 @@ export const MainContent = styled.main`
   overflow: hidden;
 `;
 
-export const Header = styled.header`
-  height: 64px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e5e5;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 2rem;
-  gap: 1.5rem;
-`;
-
-export const LanguageSwitch = styled.button`
-  background: transparent;
-  border: none;
-  color: #6b7280;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  transition: color 0.15s;
-
-  &:hover {
-    color: #111827;
-    background-color: #f3f4f6;
-  }
-`;
-
 export const PageContainer = styled.div`
   padding: 2.5rem;
   flex: 1;
@@ -95,4 +72,3 @@ export const PageContainer = styled.div`
   margin: 0 auto;
   width: 100%;
 `;
-

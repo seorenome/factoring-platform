@@ -2,18 +2,18 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nContext';
 import { useAuth, UserRole } from '../../contexts/AuthContext';
+import { Header } from '../Header/Header';
 import {
   LayoutContainer,
   Sidebar,
   SidebarLogo,
+  LogoImage,
   NavList,
   NavItem,
   MainContent,
-  Header,
-  LanguageSwitch,
   PageContainer,
 } from './Layout.styled';
-import { Button } from '../Button/Button';
+import logo from '../../assets/logo.svg';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -21,8 +21,6 @@ import {
   Building2, 
   Users, 
   Settings, 
-  LogOut,
-  Wallet,
   ClipboardList,
   Bell,
   BarChart3,
@@ -37,14 +35,10 @@ interface NavItemType {
 }
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { t, locale, setLocale } = useI18n();
+  const { t } = useI18n();
   const { role } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-
-  const toggleLanguage = () => {
-    setLocale(locale === 'uk' ? 'en' : 'uk');
-  };
 
   const navItems: NavItemType[] = [
     { path: '/dashboard', label: t.common.dashboard, icon: <LayoutDashboard size={20} />, roles: ['factor', 'supplier', 'debtor', 'admin'] },
@@ -65,8 +59,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <LayoutContainer>
       <Sidebar>
         <SidebarLogo>
-          <Wallet size={28} color="#2563eb" />
-          <span>FactorPlatform</span>
+          <LogoImage src={logo} alt="FinFactor" />
+          <span>FinFactor</span>
         </SidebarLogo>
         <NavList>
           {visibleNavItems.map((item) => (
@@ -82,19 +76,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </NavList>
       </Sidebar>
       <MainContent>
-        <Header>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginRight: 'auto' }}>
-            <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              Роль: {t.roles[role]}
-            </span>
-          </div>
-          <LanguageSwitch onClick={toggleLanguage}>
-            {locale === 'uk' ? 'EN' : 'UA'}
-          </LanguageSwitch>
-          <Button variant="outline" icon={<LogOut size={16} />}>
-            {t.common.logout}
-          </Button>
-        </Header>
+        <Header />
         <PageContainer>{children}</PageContainer>
       </MainContent>
     </LayoutContainer>
