@@ -1,0 +1,1334 @@
+# ATM Terminal Project Export
+# Generated: Wed, May 13, 2026 10:30:35 PM
+
+=== src/App.tsx ===
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { I18nProvider } from './i18n/I18nContext';
+import { Dashboard } from './pages/Dashboard/Dashboard';
+import { Requests } from './pages/Requests/Requests';
+import { RequestDetails } from './pages/RequestDetails/RequestDetails';
+import { Documents } from './pages/Documents/Documents';
+import { Companies } from './pages/Companies/Companies';
+import { PlaceholderPage } from './pages/PlaceholderPage/PlaceholderPage';
+
+export default function App() {
+  return (
+    <I18nProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/requests" element={<Requests />} />
+          <Route path="/requests/:id" element={<RequestDetails />} />
+          <Route path="/documents" element={<Documents />} />
+          <Route path="/companies" element={<Companies />} />
+          <Route path="/users" element={<PlaceholderPage title="Користувачі" />} />
+          <Route path="/settings" element={<PlaceholderPage title="Налаштування" />} />
+        </Routes>
+      </BrowserRouter>
+    </I18nProvider>
+  );
+}
+
+
+=== src/components/Button/Button.styled.ts ===
+import styled, { css } from 'styled-components';
+
+export const StyledButton = styled.button<{ $variant?: 'primary' | 'secondary' | 'outline' }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem; /* modern roundedness */
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  ${({ $variant = 'primary' }) => {
+    switch ($variant) {
+      case 'primary':
+        return css`
+          background-color: #111827;
+          color: #ffffff;
+          &:hover {
+            background-color: #374151;
+          }
+        `;
+      case 'secondary':
+        return css`
+          background-color: #f3f4f6;
+          color: #111827;
+          border-color: #e5e5e5;
+          &:hover {
+            background-color: #e5e7eb;
+          }
+        `;
+      case 'outline':
+        return css`
+          background-color: #ffffff;
+          border-color: #d1d5db;
+          color: #374151;
+          &:hover {
+            background-color: #f9fafb;
+            color: #111827;
+          }
+        `;
+    }
+  }}
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+`;
+
+
+=== src/components/Button/Button.tsx ===
+import React, { ButtonHTMLAttributes } from 'react';
+import { StyledButton } from './Button.styled';
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline';
+  icon?: React.ReactNode;
+}
+
+export const Button: React.FC<ButtonProps> = ({ variant = 'primary', icon, children, ...props }) => {
+  return (
+    <StyledButton $variant={variant} {...props}>
+      {icon}
+      {children}
+    </StyledButton>
+  );
+};
+
+
+=== src/components/Card/Card.styled.ts ===
+import styled from 'styled-components';
+
+export const CardWrapper = styled.div`
+  background: #ffffff;
+  border-radius: 1rem; /* 16px */
+  border: 1px solid #e5e5e5;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+`;
+
+export const CardTitle = styled.h3`
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+`;
+
+export const CardValue = styled.p`
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #111827;
+`;
+
+
+=== src/components/Card/Card.tsx ===
+import React from 'react';
+import { CardWrapper, CardTitle, CardValue } from './Card.styled';
+
+interface CardProps {
+  title: string;
+  value: React.ReactNode;
+  children?: React.ReactNode;
+}
+
+export const Card: React.FC<CardProps> = ({ title, value, children }) => {
+  return (
+    <CardWrapper>
+      <CardTitle>{title}</CardTitle>
+      <CardValue>{value}</CardValue>
+      {children}
+    </CardWrapper>
+  );
+};
+
+
+=== src/components/Layout/Layout.styled.ts ===
+import styled from 'styled-components';
+
+export const LayoutContainer = styled.div`
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f5f5; /* Clean utility style background */
+`;
+
+export const Sidebar = styled.aside`
+  width: 260px;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e5e5;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+`;
+
+export const SidebarLogo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  padding: 0 0.5rem;
+`;
+
+export const NavList = styled.nav`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+export const NavItem = styled.a<{ $active?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.5rem;
+  color: ${({ $active }) => ($active ? '#111827' : '#6b7280')};
+  background-color: ${({ $active }) => ($active ? '#f3f4f6' : 'transparent')};
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: ${({ $active }) => ($active ? '#f3f4f6' : '#f9fafb')};
+    color: #111827;
+  }
+`;
+
+export const MainContent = styled.main`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+export const Header = styled.header`
+  height: 64px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 2rem;
+  gap: 1.5rem;
+`;
+
+export const LanguageSwitch = styled.button`
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  transition: color 0.15s;
+
+  &:hover {
+    color: #111827;
+    background-color: #f3f4f6;
+  }
+`;
+
+export const PageContainer = styled.div`
+  padding: 2.5rem;
+  flex: 1;
+  overflow-y: auto;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+`;
+
+
+
+=== src/components/Layout/Layout.tsx ===
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useI18n } from '../../i18n/I18nContext';
+import {
+  LayoutContainer,
+  Sidebar,
+  SidebarLogo,
+  NavList,
+  NavItem,
+  MainContent,
+  Header,
+  LanguageSwitch,
+  PageContainer,
+} from './Layout.styled';
+import { Button } from '../Button/Button';
+import { 
+  LayoutDashboard, 
+  FileText, 
+  FileSignature, 
+  Building2, 
+  Users, 
+  Settings, 
+  LogOut,
+  Wallet
+} from 'lucide-react';
+
+export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t, locale, setLocale } = useI18n();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const toggleLanguage = () => {
+    setLocale(locale === 'uk' ? 'en' : 'uk');
+  };
+
+  const navItems = [
+    { path: '/dashboard', label: t.common.dashboard, icon: <LayoutDashboard size={20} /> },
+    { path: '/requests', label: t.common.requests, icon: <FileSignature size={20} /> },
+    { path: '/documents', label: t.common.documents, icon: <FileText size={20} /> },
+    { path: '/companies', label: t.common.companies, icon: <Building2 size={20} /> },
+    { path: '/users', label: t.common.users, icon: <Users size={20} /> },
+    { path: '/settings', label: t.common.settings, icon: <Settings size={20} /> },
+  ];
+
+  return (
+    <LayoutContainer>
+      <Sidebar>
+        <SidebarLogo>
+          <Wallet size={28} color="#2563eb" />
+          <span>FactorPlatform</span>
+        </SidebarLogo>
+        <NavList>
+          {navItems.map((item) => (
+            <NavItem 
+              key={item.path} 
+              $active={location.pathname.startsWith(item.path)}
+              onClick={() => navigate(item.path)}
+            >
+              {item.icon}
+              {item.label}
+            </NavItem>
+          ))}
+        </NavList>
+      </Sidebar>
+      <MainContent>
+        <Header>
+          <LanguageSwitch onClick={toggleLanguage}>
+            {locale === 'uk' ? 'EN' : 'UA'}
+          </LanguageSwitch>
+          <Button variant="outline" icon={<LogOut size={16} />}>
+            {t.common.logout}
+          </Button>
+        </Header>
+        <PageContainer>{children}</PageContainer>
+      </MainContent>
+    </LayoutContainer>
+  );
+};
+
+
+=== src/i18n/en.ts ===
+export const en = {
+  common: {
+    dashboard: 'Dashboard',
+    companies: 'Companies',
+    users: 'Users',
+    documents: 'Documents',
+    requests: 'Factoring Requests',
+    settings: 'Settings',
+    logout: 'Logout',
+    create: 'Create',
+    cancel: 'Cancel',
+    save: 'Save',
+  },
+  roles: {
+    factor: 'Factor',
+    supplier: 'Supplier',
+    debtor: 'Debtor',
+    admin: 'Admin',
+  },
+  dashboard: {
+    title: 'Platform Overview',
+    activeRequests: 'Active Requests',
+    totalFinanced: 'Total Financed Amount',
+    pendingDocuments: 'Pending Documents',
+  }
+};
+
+
+=== src/i18n/I18nContext.tsx ===
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { uk } from './uk';
+import { en } from './en';
+
+type Locale = 'uk' | 'en';
+type Translations = typeof uk;
+
+interface I18nContextProps {
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
+  t: Translations;
+}
+
+const I18nContext = createContext<I18nContextProps | undefined>(undefined);
+
+export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [locale, setLocale] = useState<Locale>('uk');
+  const t = locale === 'uk' ? uk : en;
+
+  return (
+    <I18nContext.Provider value={{ locale, setLocale, t }}>
+      {children}
+    </I18nContext.Provider>
+  );
+};
+
+export const useI18n = (): I18nContextProps => {
+  const context = useContext(I18nContext);
+  if (!context) {
+    throw new Error('useI18n must be used within an I18nProvider');
+  }
+  return context;
+};
+
+
+=== src/i18n/uk.ts ===
+export const uk = {
+  common: {
+    dashboard: 'Дашборд',
+    companies: 'Компанії',
+    users: 'Користувачі',
+    documents: 'Документи',
+    requests: 'Заявки на факторинг',
+    settings: 'Налаштування',
+    logout: 'Вийти',
+    create: 'Створити',
+    cancel: 'Скасувати',
+    save: 'Зберегти',
+  },
+  roles: {
+    factor: 'Фактор',
+    supplier: 'Постачальник',
+    debtor: 'Дебітор',
+    admin: 'Адміністратор',
+  },
+  dashboard: {
+    title: 'Огляд платформи',
+    activeRequests: 'Активні заявки',
+    totalFinanced: 'Загальна сума фінансування',
+    pendingDocuments: 'Документи на підпис',
+  }
+};
+
+
+=== src/index.css ===
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+
+=== src/main.tsx ===
+import {StrictMode} from 'react';
+import {createRoot} from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
+
+
+=== src/pages/Companies/Companies.tsx ===
+import React from 'react';
+import { useI18n } from '../../i18n/I18nContext';
+import { Layout } from '../../components/Layout/Layout';
+import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
+import { Button } from '../../components/Button/Button';
+import { FilterBar, Badge, ActionButton } from '../Requests/Requests.styled';
+import { Search, Filter, MoreHorizontal, Plus } from 'lucide-react';
+
+interface Company {
+  id: string;
+  name: string;
+  edrpou: string;
+  role: 'Постачальник' | 'Дебітор' | 'Обидва';
+  kycStatus: 'approved' | 'pending' | 'rejected';
+  limit: number | null;
+}
+
+const MOCK_COMPANIES: Company[] = [
+  { id: 'COMP-001', name: 'ТОВ "Постач-Пром"', edrpou: '12345678', role: 'Постачальник', kycStatus: 'approved', limit: 1000000 },
+  { id: 'COMP-002', name: 'ТОВ "Рітейл Груп"', edrpou: '87654321', role: 'Дебітор', kycStatus: 'approved', limit: 5000000 },
+  { id: 'COMP-003', name: 'ФОП Коваленко', edrpou: '32165498', role: 'Постачальник', kycStatus: 'pending', limit: null },
+  { id: 'COMP-004', name: 'ТОВ "Агроінвест"', edrpou: '99887766', role: 'Обидва', kycStatus: 'approved', limit: 2500000 },
+];
+
+export const Companies: React.FC = () => {
+  const { t } = useI18n();
+
+  const getStatusBadge = (status: Company['kycStatus']) => {
+    switch(status) {
+      case 'approved': return <Badge $status="approved">KYC Пройдено</Badge>;
+      case 'pending': return <Badge $status="pending">На перевірці</Badge>;
+      case 'rejected': return <Badge $status="rejected">Відхилено</Badge>;
+    }
+  };
+
+  return (
+    <Layout>
+      <DashboardHeader>
+        <Title>{t.common.companies}</Title>
+        <Button icon={<Plus size={16} />}>Додати компанію</Button>
+      </DashboardHeader>
+
+      <FilterBar>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+          <input 
+            type="text" 
+            placeholder="Пошук за назвою або ЄДРПОУ..." 
+            style={{ 
+              width: '100%', 
+              padding: '0.625rem 1rem 0.625rem 2.5rem', 
+              borderRadius: '0.5rem', 
+              border: '1px solid #d1d5db',
+              fontSize: '0.875rem'
+            }} 
+          />
+        </div>
+        <Button variant="outline" icon={<Filter size={16} />}>Фільтри</Button>
+      </FilterBar>
+
+      <TableContainer>
+        <TableHeader style={{ fontSize: '0.875rem' }}>Всі компанії ({MOCK_COMPANIES.length})</TableHeader>
+        <Table>
+          <thead>
+            <tr>
+              <Th>Назва</Th>
+              <Th>ЄДРПОУ</Th>
+              <Th>Роль</Th>
+              <Th>Ліміт</Th>
+              <Th>KYC / AML Статус</Th>
+              <Th></Th>
+            </tr>
+          </thead>
+          <tbody>
+            {MOCK_COMPANIES.map(company => (
+              <tr key={company.id}>
+                <Td style={{ fontWeight: 600, color: '#111827' }}>{company.name}</Td>
+                <Td>{company.edrpou}</Td>
+                <Td>{company.role}</Td>
+                <Td>{company.limit ? `₴ ${company.limit.toLocaleString()}` : '-'}</Td>
+                <Td>{getStatusBadge(company.kycStatus)}</Td>
+                <Td style={{ textAlign: 'right' }}>
+                  <ActionButton>
+                    <MoreHorizontal size={18} />
+                  </ActionButton>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </TableContainer>
+    </Layout>
+  );
+};
+
+
+=== src/pages/Dashboard/Dashboard.styled.ts ===
+import styled from 'styled-components';
+
+export const DashboardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+`;
+
+export const Title = styled.h1`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.01em;
+`;
+
+export const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+`;
+
+export const TableContainer = styled.div`
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e5e5e5;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+`;
+
+export const TableHeader = styled.div`
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
+  font-weight: 600;
+  color: #111827;
+`;
+
+export const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  
+  tbody tr {
+    transition: background-color 0.15s;
+    &:hover {
+      background-color: #f9fafb;
+    }
+  }
+`;
+
+export const Th = styled.th`
+  padding: 0.875rem 1.5rem;
+  background-color: #ffffff;
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid #e5e5e5;
+`;
+
+export const Td = styled.td`
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
+  color: #374151;
+  font-size: 0.875rem;
+`;
+
+
+=== src/pages/Dashboard/Dashboard.tsx ===
+import React from 'react';
+import { useI18n } from '../../i18n/I18nContext';
+import { Layout } from '../../components/Layout/Layout';
+import { Card } from '../../components/Card/Card';
+import { Button } from '../../components/Button/Button';
+import {
+  DashboardHeader,
+  Title,
+  Grid,
+  TableContainer,
+  TableHeader,
+  Table,
+  Th,
+  Td,
+} from './Dashboard.styled';
+
+export const Dashboard: React.FC = () => {
+  const { t } = useI18n();
+
+  return (
+    <Layout>
+      <DashboardHeader>
+        <Title>{t.dashboard.title}</Title>
+        <Button>{t.common.create} заявку</Button>
+      </DashboardHeader>
+
+      <Grid>
+        <Card title={t.dashboard.activeRequests} value="12" />
+        <Card title={t.dashboard.totalFinanced} value="₴ 4,500,000" />
+        <Card title={t.dashboard.pendingDocuments} value="5" />
+      </Grid>
+
+      <TableContainer>
+        <TableHeader>Останні заявки на факторинг</TableHeader>
+        <Table>
+          <thead>
+            <tr>
+              <Th>ID</Th>
+              <Th>Постачальник</Th>
+              <Th>Дебітор</Th>
+              <Th>Сума</Th>
+              <Th>Статус</Th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <Td>#REQ-001</Td>
+              <Td>ТОВ "Постач-Пром"</Td>
+              <Td>ТОВ "Рітейл Груп"</Td>
+              <Td>₴ 250,000</Td>
+              <Td>На розгляді</Td>
+            </tr>
+            <tr>
+              <Td>#REQ-002</Td>
+              <Td>ФОП Коваленко</Td>
+              <Td>ТОВ "Еко-Маркет"</Td>
+              <Td>₴ 120,000</Td>
+              <Td>Схвалено</Td>
+            </tr>
+          </tbody>
+        </Table>
+      </TableContainer>
+    </Layout>
+  );
+};
+
+
+=== src/pages/Documents/Documents.tsx ===
+import React from 'react';
+import { useI18n } from '../../i18n/I18nContext';
+import { Layout } from '../../components/Layout/Layout';
+import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
+import { Button } from '../../components/Button/Button';
+import { FilterBar, Badge, ActionButton } from '../Requests/Requests.styled';
+import { Search, Filter, MoreHorizontal, Upload, FileText } from 'lucide-react';
+
+interface Document {
+  id: string;
+  name: string;
+  type: string;
+  date: string;
+  supplier: string;
+  status: 'verified' | 'pending' | 'rejected';
+}
+
+const MOCK_DOCS: Document[] = [
+  { id: 'DOC-101', name: 'Рахунок-фактура №142.pdf', type: 'Рахунок-фактура', date: '2026-05-08', supplier: 'ТОВ "Постач-Пром"', status: 'verified' },
+  { id: 'DOC-102', name: 'Видаткова_накладна_ВН-88.pdf', type: 'Видаткова накладна', date: '2026-05-08', supplier: 'ТОВ "Постач-Пром"', status: 'pending' },
+  { id: 'DOC-103', name: 'Договір_поставки_12-А.pdf', type: 'Договір', date: '2026-05-01', supplier: 'ФОП Коваленко', status: 'verified' },
+];
+
+export const Documents: React.FC = () => {
+  const { t } = useI18n();
+
+  const getStatusBadge = (status: Document['status']) => {
+    switch(status) {
+      case 'verified': return <Badge $status="approved">Перевірено</Badge>;
+      case 'pending': return <Badge $status="pending">На перевірці</Badge>;
+      case 'rejected': return <Badge $status="rejected">Відхилено</Badge>;
+    }
+  };
+
+  return (
+    <Layout>
+      <DashboardHeader>
+        <Title>{t.common.documents}</Title>
+        <Button icon={<Upload size={16} />}>Завантажити документ</Button>
+      </DashboardHeader>
+
+      <FilterBar>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+          <input 
+            type="text" 
+            placeholder="Пошук за назвою або ID..." 
+            style={{ 
+              width: '100%', 
+              padding: '0.625rem 1rem 0.625rem 2.5rem', 
+              borderRadius: '0.5rem', 
+              border: '1px solid #d1d5db',
+              fontSize: '0.875rem'
+            }} 
+          />
+        </div>
+        <Button variant="outline" icon={<Filter size={16} />}>Фільтри</Button>
+      </FilterBar>
+
+      <TableContainer>
+        <TableHeader style={{ fontSize: '0.875rem' }}>Всі документи ({MOCK_DOCS.length})</TableHeader>
+        <Table>
+          <thead>
+            <tr>
+              <Th>Назва</Th>
+              <Th>Тип</Th>
+              <Th>Дата</Th>
+              <Th>Контрагент</Th>
+              <Th>Статус</Th>
+              <Th></Th>
+            </tr>
+          </thead>
+          <tbody>
+            {MOCK_DOCS.map(doc => (
+              <tr key={doc.id}>
+                <Td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 500, color: '#111827' }}>
+                    <FileText size={18} color="#6b7280" />
+                    {doc.name}
+                  </div>
+                </Td>
+                <Td>{doc.type}</Td>
+                <Td>{doc.date}</Td>
+                <Td>{doc.supplier}</Td>
+                <Td>{getStatusBadge(doc.status)}</Td>
+                <Td style={{ textAlign: 'right' }}>
+                  <ActionButton>
+                    <MoreHorizontal size={18} />
+                  </ActionButton>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </TableContainer>
+    </Layout>
+  );
+};
+
+
+=== src/pages/PlaceholderPage/PlaceholderPage.tsx ===
+import React from 'react';
+import { Layout } from '../../components/Layout/Layout';
+import { Title, DashboardHeader } from '../Dashboard/Dashboard.styled';
+
+export const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => {
+  return (
+    <Layout>
+      <DashboardHeader>
+        <Title>{title}</Title>
+      </DashboardHeader>
+      <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>This page is coming soon.</div>
+    </Layout>
+  );
+};
+
+
+=== src/pages/RequestDetails/RequestDetails.styled.ts ===
+import styled from 'styled-components';
+
+export const DetailsContainer = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  align-items: start;
+`;
+
+export const MainPanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+export const SidebarPanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+export const SectionCard = styled.div`
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e5e5e5;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+`;
+
+export const SectionTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 1.25rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+export const DataGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+`;
+
+export const DataItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+export const DataLabel = styled.span`
+  font-size: 0.8125rem;
+  color: #6b7280;
+  font-weight: 500;
+`;
+
+export const DataValue = styled.span`
+  font-size: 0.875rem;
+  color: #111827;
+  font-weight: 500;
+`;
+
+export const Timeline = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+export const TimelineItem = styled.div<{ $active?: boolean }>`
+  display: flex;
+  gap: 1rem;
+  position: relative;
+  
+  &:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 24px;
+    bottom: -16px;
+    width: 2px;
+    background-color: ${({ $active }) => ($active ? '#111827' : '#e5e5e5')};
+  }
+`;
+
+export const TimelineDot = styled.div<{ $active?: boolean; $completed?: boolean }>`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: ${({ $active, $completed }) => ($completed || $active ? '#111827' : '#ffffff')};
+  border: 2px solid ${({ $active, $completed }) => ($completed || $active ? '#111827' : '#e5e5e5')};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+`;
+
+export const TimelineContent = styled.div`
+  flex: 1;
+  padding-bottom: 0.5rem;
+`;
+
+export const InputGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+`;
+
+export const Label = styled.label`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+`;
+
+export const Input = styled.input`
+  padding: 0.625rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  
+  &:focus {
+    outline: none;
+    border-color: #111827;
+    box-shadow: 0 0 0 1px #111827;
+  }
+`;
+
+export const ButtonGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+`;
+
+
+=== src/pages/RequestDetails/RequestDetails.tsx ===
+import React from 'react';
+import { useI18n } from '../../i18n/I18nContext';
+import { Layout } from '../../components/Layout/Layout';
+import { DashboardHeader, Title } from '../Dashboard/Dashboard.styled';
+import { Button } from '../../components/Button/Button';
+import { 
+  DetailsContainer, MainPanel, SidebarPanel, SectionCard, SectionTitle, 
+  DataGrid, DataItem, DataLabel, DataValue, Timeline, TimelineItem, 
+  TimelineDot, TimelineContent, InputGroup, Label, Input, ButtonGroup 
+} from './RequestDetails.styled';
+import { Badge } from '../Requests/Requests.styled';
+import { Check, ArrowLeft, FileText, Download } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+
+export const RequestDetails: React.FC = () => {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const { id } = useParams();
+
+  const requestId = id || 'REQ-001';
+
+  return (
+    <Layout>
+      <div style={{ marginBottom: '1rem' }}>
+        <button 
+          onClick={() => navigate('/requests')}
+          style={{ background: 'none', border: 'none', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}
+        >
+          <ArrowLeft size={16} /> Повернутися до списку
+        </button>
+      </div>
+
+      <DashboardHeader>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <Title>Заявка {requestId}</Title>
+          <Badge $status="pending">На розгляді</Badge>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <Button variant="outline">Запросити додаткові дані</Button>
+          <Button variant="secondary">Відхилити</Button>
+          <Button>Схвалити фінансування</Button>
+        </div>
+      </DashboardHeader>
+
+      <DetailsContainer>
+        <MainPanel>
+          <SectionCard>
+            <SectionTitle>Інформація про заявку</SectionTitle>
+            <DataGrid>
+              <DataItem>
+                <DataLabel>Постачальник</DataLabel>
+                <DataValue>ТОВ "Постач-Пром" (ЄДРПОУ: 12345678)</DataValue>
+              </DataItem>
+              <DataItem>
+                <DataLabel>Дебітор</DataLabel>
+                <DataValue>ТОВ "Рітейл Груп" (ЄДРПОУ: 87654321)</DataValue>
+              </DataItem>
+              <DataItem>
+                <DataLabel>Загальна сума інвойсів</DataLabel>
+                <DataValue>₴ 250,000.00</DataValue>
+              </DataItem>
+              <DataItem>
+                <DataLabel>Бажаний строк фінансування</DataLabel>
+                <DataValue>60 днів</DataValue>
+              </DataItem>
+              <DataItem>
+                <DataLabel>Тип факторингу</DataLabel>
+                <DataValue>З регресом</DataValue>
+              </DataItem>
+              <DataItem>
+                <DataLabel>Дата створення</DataLabel>
+                <DataValue>08 Травня 2026, 14:30</DataValue>
+              </DataItem>
+            </DataGrid>
+          </SectionCard>
+
+          <SectionCard>
+            <SectionTitle>Документи</SectionTitle>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid #e5e5e5', borderRadius: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <FileText color="#6b7280" />
+                  <div>
+                    <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>Рахунок-фактура №142.pdf</div>
+                    <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>Завантажено: 08.05.2026 • 2.4 MB</div>
+                  </div>
+                </div>
+                <Button variant="outline" icon={<Download size={16} />}>Завантажити</Button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid #e5e5e5', borderRadius: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <FileText color="#6b7280" />
+                  <div>
+                    <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>Видаткова_накладна_ВН-88.pdf</div>
+                    <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>Завантажено: 08.05.2026 • 1.1 MB</div>
+                  </div>
+                </div>
+                <Button variant="outline" icon={<Download size={16} />}>Завантажити</Button>
+              </div>
+            </div>
+          </SectionCard>
+        </MainPanel>
+
+        <SidebarPanel>
+          <SectionCard>
+            <SectionTitle>Рішення та умови (Фактор)</SectionTitle>
+            
+            <InputGroup>
+              <Label>Відсоток фінансування (%)</Label>
+              <Input type="number" defaultValue={80} />
+            </InputGroup>
+            
+            <InputGroup>
+              <Label>Ставка / Дисконт (% річних)</Label>
+              <Input type="number" defaultValue={18} />
+            </InputGroup>
+            
+            <InputGroup>
+              <Label>Сума до виплати постачальнику</Label>
+              <Input type="text" value="₴ 200,000.00" readOnly style={{ backgroundColor: '#f9fafb' }} />
+            </InputGroup>
+
+            <ButtonGroup>
+              <Button style={{ width: '100%' }}>Зберегти умови</Button>
+            </ButtonGroup>
+          </SectionCard>
+
+          <SectionCard>
+            <SectionTitle>Статус процесу</SectionTitle>
+            <Timeline>
+              <TimelineItem $active>
+                <TimelineDot $completed>
+                  <Check size={14} color="white" />
+                </TimelineDot>
+                <TimelineContent>
+                  <DataValue>Заявка створена</DataValue>
+                  <DataLabel style={{ display: 'block' }}>08.05.2026 14:30</DataLabel>
+                </TimelineContent>
+              </TimelineItem>
+              
+              <TimelineItem $active>
+                <TimelineDot $completed>
+                  <Check size={14} color="white" />
+                </TimelineDot>
+                <TimelineContent>
+                  <DataValue>KYC/AML перевірка пройдена</DataValue>
+                  <DataLabel style={{ display: 'block' }}>08.05.2026 15:15</DataLabel>
+                </TimelineContent>
+              </TimelineItem>
+
+              <TimelineItem $active>
+                <TimelineDot $active />
+                <TimelineContent>
+                  <DataValue style={{ color: '#2563eb' }}>Рішення фактора</DataValue>
+                  <DataLabel style={{ display: 'block' }}>Очікує на встановлення умов</DataLabel>
+                </TimelineContent>
+              </TimelineItem>
+
+              <TimelineItem>
+                <TimelineDot />
+                <TimelineContent>
+                  <DataValue style={{ color: '#9ca3af' }}>Підписання документів (КЕП)</DataValue>
+                </TimelineContent>
+              </TimelineItem>
+              
+              <TimelineItem>
+                <TimelineDot />
+                <TimelineContent>
+                  <DataValue style={{ color: '#9ca3af' }}>Виплата фінансування</DataValue>
+                </TimelineContent>
+              </TimelineItem>
+            </Timeline>
+          </SectionCard>
+        </SidebarPanel>
+      </DetailsContainer>
+    </Layout>
+  );
+};
+
+
+=== src/pages/Requests/Requests.styled.ts ===
+import styled from 'styled-components';
+
+export const FilterBar = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: center;
+  background: #ffffff;
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e5e5;
+`;
+
+export const TabsContainer = styled.div`
+  display: flex;
+  gap: 2rem;
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 2rem;
+`;
+
+export const TabItem = styled.div<{ $active?: boolean }>`
+  padding: 0.75rem 0;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: ${({ $active }) => ($active ? '#111827' : '#6b7280')};
+  border-bottom: 2px solid ${({ $active }) => ($active ? '#111827' : 'transparent')};
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    color: #111827;
+  }
+`;
+
+export const Badge = styled.span<{ $status: 'pending' | 'approved' | 'rejected' | 'draft' }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  
+  ${({ $status }) => {
+    switch ($status) {
+      case 'pending':
+        return 'background-color: #fef3c7; color: #92400e;'; // Yellow
+      case 'approved':
+        return 'background-color: #d1fae5; color: #065f46;'; // Green
+      case 'rejected':
+        return 'background-color: #fee2e2; color: #b91c1c;'; // Red
+      case 'draft':
+        return 'background-color: #f3f4f6; color: #374151;'; // Gray
+    }
+  }}
+`;
+
+export const ActionButton = styled.button`
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+  transition: all 0.15s;
+  display: inline-flex;
+  
+  &:hover {
+    color: #111827;
+    background-color: #f3f4f6;
+  }
+`;
+
+
+=== src/pages/Requests/Requests.tsx ===
+import React, { useState } from 'react';
+import { useI18n } from '../../i18n/I18nContext';
+import { Layout } from '../../components/Layout/Layout';
+import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
+import { Button } from '../../components/Button/Button';
+import { FilterBar, TabsContainer, TabItem, Badge, ActionButton } from './Requests.styled';
+import { Search, Filter, MoreHorizontal, FilePlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+interface Request {
+  id: string;
+  date: string;
+  supplier: string;
+  debtor: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected' | 'draft';
+}
+
+const MOCK_REQUESTS: Request[] = [
+  { id: 'REQ-001', date: '2026-05-08', supplier: 'ТОВ "Постач-Пром"', debtor: 'ТОВ "Рітейл Груп"', amount: 250000, status: 'pending' },
+  { id: 'REQ-002', date: '2026-05-07', supplier: 'ФОП Коваленко', debtor: 'ТОВ "Еко-Маркет"', amount: 120000, status: 'approved' },
+  { id: 'REQ-003', date: '2026-05-05', supplier: 'ТОВ "Західбуд"', debtor: 'ПрАТ "Київміськбуд"', amount: 840000, status: 'rejected' },
+  { id: 'REQ-004', date: '2026-05-08', supplier: 'ТОВ "Торг-Майстер"', debtor: 'ТОВ "Агроінвест"', amount: 45000, status: 'draft' },
+];
+
+export const Requests: React.FC = () => {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved'>('all');
+
+  const getStatusText = (status: Request['status']) => {
+    switch(status) {
+      case 'pending': return 'На розгляді';
+      case 'approved': return 'Схвалено';
+      case 'rejected': return 'Відхилено';
+      case 'draft': return 'Чернетка';
+    }
+  };
+
+  return (
+    <Layout>
+      <DashboardHeader>
+        <Title>{t.common.requests}</Title>
+        <Button icon={<FilePlus size={16} />}>Створити заявку</Button>
+      </DashboardHeader>
+
+      <TabsContainer>
+        <TabItem $active={activeTab === 'all'} onClick={() => setActiveTab('all')}>Всі заявки</TabItem>
+        <TabItem $active={activeTab === 'pending'} onClick={() => setActiveTab('pending')}>На розгляді</TabItem>
+        <TabItem $active={activeTab === 'approved'} onClick={() => setActiveTab('approved')}>Схвалені</TabItem>
+      </TabsContainer>
+
+      <FilterBar>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+          <input 
+            type="text" 
+            placeholder="Пошук за ID, контрагентом..." 
+            style={{ 
+              width: '100%', 
+              padding: '0.625rem 1rem 0.625rem 2.5rem', 
+              borderRadius: '0.375rem', 
+              border: '1px solid #d1d5db',
+              fontSize: '0.875rem'
+            }} 
+          />
+        </div>
+        <Button variant="outline" icon={<Filter size={16} />}>Фільтри</Button>
+      </FilterBar>
+
+      <TableContainer>
+        <TableHeader style={{ fontSize: '0.875rem' }}>Всього знайдено: {MOCK_REQUESTS.length}</TableHeader>
+        <Table>
+          <thead>
+            <tr>
+              <Th>ID Заявки</Th>
+              <Th>Дата</Th>
+              <Th>Постачальник</Th>
+              <Th>Дебітор</Th>
+              <Th>Сума</Th>
+              <Th>Статус</Th>
+              <Th></Th>
+            </tr>
+          </thead>
+          <tbody>
+            {MOCK_REQUESTS.map(req => (
+              <tr 
+                key={req.id} 
+                onClick={() => navigate(`/requests/${req.id}`)}
+                style={{ cursor: 'pointer' }}
+              >
+                <Td style={{ fontWeight: 500, color: '#111827' }}>{req.id}</Td>
+                <Td>{req.date}</Td>
+                <Td>{req.supplier}</Td>
+                <Td>{req.debtor}</Td>
+                <Td>₴ {req.amount.toLocaleString()}</Td>
+                <Td><Badge $status={req.status}>{getStatusText(req.status)}</Badge></Td>
+                <Td style={{ textAlign: 'right' }}>
+                  <ActionButton onClick={(e) => { e.stopPropagation(); /* optional action menu */ }}>
+                    <MoreHorizontal size={18} />
+                  </ActionButton>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </TableContainer>
+    </Layout>
+  );
+};
+
+
