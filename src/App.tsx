@@ -15,6 +15,7 @@ import { PlaceholderPage } from './pages/PlaceholderPage/PlaceholderPage';
 import { Limits } from './pages/Limits/Limits';
 import { Notifications } from './pages/Notifications/Notifications';
 import { Reports } from './pages/Reports/Reports';
+import { AuditLog } from './pages/AuditLog/AuditLog';
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
             <Route path="/limits" element={<Limits />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/audit" element={<AuditLog />} />
             <Route path="/settings" element={<PlaceholderPage title="Налаштування" />} />
           </Routes>
         </BrowserRouter>
