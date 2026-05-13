@@ -1,20 +1,17 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# FactorPlatform — B2B Factoring Platform
 
-# Run and deploy your AI Studio app
+**FactorPlatform** is a web-based B2B solution for automating factoring operations. It enables Suppliers, Debtors, and Factors to manage invoices, financing requests, limits, document signing (KEP/Diia), and reporting.
 
-This contains everything you need to run your app locally.
+## Stack
 
-View your app in AI Studio: https://ai.studio/apps/d666e2ae-b3f3-447f-af69-b59070ccddf8
+- React + TypeScript
+- Vite
+- Styled Components
+- React Router
+- Lucide React (icons)
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
-
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
