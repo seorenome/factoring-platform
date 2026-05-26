@@ -1,38 +1,36 @@
-import React, { useState } from 'react';
-import { useI18n } from '../../i18n/I18nContext';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
 import { FilterBar, TabsContainer, TabItem, Badge, ActionButton } from './Requests.styled';
-import { Search, Filter, MoreHorizontal, FilePlus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-
-interface Request {
-  id: string;
-  date: string;
-  supplier: string;
-  debtor: string;
-  amount: number;
-  status: 'pending' | 'approved' | 'rejected' | 'draft';
-}
-
-const MOCK_REQUESTS: Request[] = [
-  { id: 'REQ-001', date: '2026-05-08', supplier: 'ТОВ "Постач-Пром"', debtor: 'ТОВ "Рітейл Груп"', amount: 250000, status: 'pending' },
-  { id: 'REQ-002', date: '2026-05-07', supplier: 'ФОП Коваленко', debtor: 'ТОВ "Еко-Маркет"', amount: 120000, status: 'approved' },
-  { id: 'REQ-003', date: '2026-05-05', supplier: 'ТОВ "Західбуд"', debtor: 'ПрАТ "Київміськбуд"', amount: 840000, status: 'rejected' },
-  { id: 'REQ-004', date: '2026-05-08', supplier: 'ТОВ "Торг-Майстер"', debtor: 'ТОВ "Агроінвест"', amount: 45000, status: 'draft' },
-  { id: 'REQ-005', date: '2026-05-10', supplier: 'ТОВ "Постач-Пром"', debtor: 'ТОВ "Рітейл Груп"', amount: 180000, status: 'pending' },
-  { id: 'REQ-006', date: '2026-05-09', supplier: 'ФОП Коваленко', debtor: 'ТОВ "Еко-Маркет"', amount: 95000, status: 'approved' },
-];
+import { Search, Filter, MoreHorizontal, FilePlus, Loader2 } from 'lucide-react';
+import { api, Request } from '../../services/api';
 
 export const Requests: React.FC = () => {
-  const { t } = useI18n();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadRequests();
+  }, []);
+
+  const loadRequests = async () => {
+    try {
+      const data = await api.getRequests();
+      setRequests(data);
+    } catch (error) {
+      console.error('Failed to load requests:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getFilteredRequests = () => {
-    let filtered = MOCK_REQUESTS;
+    let filtered = requests;
 
     if (activeTab === 'pending') {
       filtered = filtered.filter(req => req.status === 'pending');
@@ -43,9 +41,9 @@ export const Requests: React.FC = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(req =>
-        req.id.toLowerCase().includes(query) ||
-        req.supplier.toLowerCase().includes(query) ||
-        req.debtor.toLowerCase().includes(query)
+        req.requestNumber.toLowerCase().includes(query) ||
+        req.supplierName.toLowerCase().includes(query) ||
+        req.debtorName.toLowerCase().includes(query)
       );
     }
 
@@ -58,15 +56,26 @@ export const Requests: React.FC = () => {
       case 'approved': return 'Схвалено';
       case 'rejected': return 'Відхилено';
       case 'draft': return 'Чернетка';
+      default: return status;
     }
   };
 
   const filteredRequests = getFilteredRequests();
 
+  if (loading) {
+    return (
+      <Layout>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <Loader2 size={32} className="animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <DashboardHeader>
-        <Title>{t.common.requests}</Title>
+        <Title>Заявки на факторинг</Title>
         <Button icon={<FilePlus size={16} />} onClick={() => navigate('/requests/create')}>
           Створити заявку
         </Button>
@@ -74,13 +83,13 @@ export const Requests: React.FC = () => {
 
       <TabsContainer>
         <TabItem $active={activeTab === 'all'} onClick={() => setActiveTab('all')}>
-          Всі заявки ({MOCK_REQUESTS.length})
+          Всі заявки ({requests.length})
         </TabItem>
         <TabItem $active={activeTab === 'pending'} onClick={() => setActiveTab('pending')}>
-          На розгляді ({MOCK_REQUESTS.filter(r => r.status === 'pending').length})
+          На розгляді ({requests.filter(r => r.status === 'pending').length})
         </TabItem>
         <TabItem $active={activeTab === 'approved'} onClick={() => setActiveTab('approved')}>
-          Схвалені ({MOCK_REQUESTS.filter(r => r.status === 'approved').length})
+          Схвалені ({requests.filter(r => r.status === 'approved').length})
         </TabItem>
       </TabsContainer>
 
@@ -125,10 +134,10 @@ export const Requests: React.FC = () => {
                 onClick={() => navigate(`/requests/${req.id}`)}
                 style={{ cursor: 'pointer' }}
               >
-                <Td style={{ fontWeight: 500, color: '#111827' }}>{req.id}</Td>
-                <Td>{req.date}</Td>
-                <Td>{req.supplier}</Td>
-                <Td>{req.debtor}</Td>
+                <Td style={{ fontWeight: 500, color: '#111827' }}>{req.requestNumber}</Td>
+                <Td>{new Date(req.createdAt).toLocaleDateString()}</Td>
+                <Td>{req.supplierName}</Td>
+                <Td>{req.debtorName}</Td>
                 <Td>₴ {req.amount.toLocaleString()}</Td>
                 <Td><Badge $status={req.status}>{getStatusText(req.status)}</Badge></Td>
                 <Td style={{ textAlign: 'right' }}>

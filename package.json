@@ -14,8 +14,6 @@
     "@google/genai": "^1.29.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
-    "dotenv": "^17.2.3",
-    "express": "^4.21.2",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "react": "^19.0.1",
@@ -25,13 +23,30 @@
     "vite": "^6.2.3"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^22.14.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.25",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.19.19",
     "@types/styled-components": "^5.1.36",
     "autoprefixer": "^10.4.21",
     "tailwindcss": "^4.1.14",
+    "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3"
-  }
+  },
+  "description": "**FactorPlatform** is a web-based B2B solution for automating factoring operations. It enables Suppliers, Debtors, and Factors to manage invoices, financing requests, limits, document signing (KEP/Diia), and reporting.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seorenome/factoring-platform.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/seorenome/factoring-platform/issues"
+  },
+  "homepage": "https://github.com/seorenome/factoring-platform#readme"
 }

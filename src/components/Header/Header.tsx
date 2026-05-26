@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useI18n } from '../../i18n/I18nContext';
+import { useNavigate } from 'react-router-dom';
 import {
   HeaderContainer,
   Logo,
@@ -15,11 +16,12 @@ import {
   DropdownMenu,
   DropdownItem,
 } from './Header.styled';
-import { User, LogOut, Settings } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
 
 export const Header: React.FC = () => {
-  const { role } = useAuth();
+  const { role, user, logout } = useAuth();
   const { t, locale, setLocale } = useI18n();
+  const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -28,15 +30,31 @@ export const Header: React.FC = () => {
   };
 
   const getUserInitials = () => {
-    return 'ОП'; // В реальному проекті брати з даних користувача
+    if (user?.name) {
+      return user.name.charAt(0);
+    }
+    return '?';
   };
 
   const getUserName = () => {
-    return 'Олена Петренко'; // В реальному проекті брати з даних користувача
+    return user?.name || 'Користувач';
   };
 
   const getUserRoleLabel = () => {
-    return t.roles[role];
+    if (role && t.roles[role]) {
+      return t.roles[role];
+    }
+    return role || '';
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const handleProfile = () => {
+    setIsDropdownOpen(false);
+    // TODO: navigate to profile page
   };
 
   useEffect(() => {
@@ -51,7 +69,7 @@ export const Header: React.FC = () => {
 
   return (
     <HeaderContainer>
-      <Logo>FactorPlatform — Факторингова платформа</Logo>
+      <Logo>FinFactor</Logo>
       <RightSection>
         <div style={{ position: 'relative' }} ref={dropdownRef}>
           <UserButton onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
@@ -63,11 +81,11 @@ export const Header: React.FC = () => {
           </UserButton>
           {isDropdownOpen && (
             <DropdownMenu>
-              <DropdownItem onClick={() => console.log('Profile')}>
+              <DropdownItem onClick={handleProfile}>
                 <User size={16} />
                 Мій профіль
               </DropdownItem>
-              <DropdownItem onClick={() => console.log('Logout')}>
+              <DropdownItem onClick={handleLogout}>
                 <LogOut size={16} />
                 {t.common.logout}
               </DropdownItem>

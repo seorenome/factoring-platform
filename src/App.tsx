@@ -17,6 +17,15 @@ import { Limits } from './pages/Limits/Limits';
 import { Notifications } from './pages/Notifications/Notifications';
 import { Reports } from './pages/Reports/Reports';
 import { AuditLog } from './pages/AuditLog/AuditLog';
+import { Login } from './pages/Login/Login';
+
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
 
 export default function App() {
   return (
@@ -24,19 +33,44 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/login" element={<Login />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/requests" element={<Requests />} />
-            <Route path="/requests/:id" element={<RequestDetails />} />
-            <Route path="/requests/create" element={<CreateRequest />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route path="/companies" element={<Companies />} />
-            <Route path="/users" element={<PlaceholderPage title="Користувачі" />} />
-            <Route path="/limits" element={<Limits />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/audit" element={<AuditLog />} />
-            <Route path="/settings" element={<PlaceholderPage title="Налаштування" />} />
+            <Route path="/dashboard" element={
+              <PrivateRoute><Dashboard /></PrivateRoute>
+            } />
+            <Route path="/requests" element={
+              <PrivateRoute><Requests /></PrivateRoute>
+            } />
+            <Route path="/requests/:id" element={
+              <PrivateRoute><RequestDetails /></PrivateRoute>
+            } />
+            <Route path="/requests/create" element={
+              <PrivateRoute><CreateRequest /></PrivateRoute>
+            } />
+            <Route path="/documents" element={
+              <PrivateRoute><Documents /></PrivateRoute>
+            } />
+            <Route path="/companies" element={
+              <PrivateRoute><Companies /></PrivateRoute>
+            } />
+            <Route path="/users" element={
+              <PrivateRoute><PlaceholderPage title="Користувачі" /></PrivateRoute>
+            } />
+            <Route path="/limits" element={
+              <PrivateRoute><Limits /></PrivateRoute>
+            } />
+            <Route path="/notifications" element={
+              <PrivateRoute><Notifications /></PrivateRoute>
+            } />
+            <Route path="/reports" element={
+              <PrivateRoute><Reports /></PrivateRoute>
+            } />
+            <Route path="/audit" element={
+              <PrivateRoute><AuditLog /></PrivateRoute>
+            } />
+            <Route path="/settings" element={
+              <PrivateRoute><PlaceholderPage title="Налаштування" /></PrivateRoute>
+            } />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
