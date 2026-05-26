@@ -23,7 +23,7 @@ export const TabItem = styled.div<{ $active?: boolean }>`
   font-weight: 500;
   font-size: 0.875rem;
   color: ${({ $active }) => ($active ? '#111827' : '#6b7280')};
-  border-bottom: 2px solid ${({ $active }) => ($active ? '#111827' : 'transparent')};
+  border-bottom: 2px solid ${({ $active }) => ($active ? '#2563eb' : 'transparent')};
   cursor: pointer;
   transition: all 0.15s;
 
@@ -43,13 +43,13 @@ export const Badge = styled.span<{ $status: 'pending' | 'approved' | 'rejected' 
   ${({ $status }) => {
     switch ($status) {
       case 'pending':
-        return 'background-color: #fef3c7; color: #92400e;'; // Yellow
+        return 'background-color: #fef3c7; color: #92400e;';
       case 'approved':
-        return 'background-color: #d1fae5; color: #065f46;'; // Green
+        return 'background-color: #d1fae5; color: #065f46;';
       case 'rejected':
-        return 'background-color: #fee2e2; color: #b91c1c;'; // Red
+        return 'background-color: #fee2e2; color: #b91c1c;';
       case 'draft':
-        return 'background-color: #f3f4f6; color: #374151;'; // Gray
+        return 'background-color: #f3f4f6; color: #374151;';
     }
   }}
 `;

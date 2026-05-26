@@ -21,12 +21,38 @@ const MOCK_REQUESTS: Request[] = [
   { id: 'REQ-002', date: '2026-05-07', supplier: 'ФОП Коваленко', debtor: 'ТОВ "Еко-Маркет"', amount: 120000, status: 'approved' },
   { id: 'REQ-003', date: '2026-05-05', supplier: 'ТОВ "Західбуд"', debtor: 'ПрАТ "Київміськбуд"', amount: 840000, status: 'rejected' },
   { id: 'REQ-004', date: '2026-05-08', supplier: 'ТОВ "Торг-Майстер"', debtor: 'ТОВ "Агроінвест"', amount: 45000, status: 'draft' },
+  { id: 'REQ-005', date: '2026-05-10', supplier: 'ТОВ "Постач-Пром"', debtor: 'ТОВ "Рітейл Груп"', amount: 180000, status: 'pending' },
+  { id: 'REQ-006', date: '2026-05-09', supplier: 'ФОП Коваленко', debtor: 'ТОВ "Еко-Маркет"', amount: 95000, status: 'approved' },
 ];
 
 export const Requests: React.FC = () => {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const getFilteredRequests = () => {
+    let filtered = MOCK_REQUESTS;
+
+    // Фільтрація по вкладках
+    if (activeTab === 'pending') {
+      filtered = filtered.filter(req => req.status === 'pending');
+    } else if (activeTab === 'approved') {
+      filtered = filtered.filter(req => req.status === 'approved');
+    }
+
+    // Пошук по ID, постачальнику або дебітору
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(req =>
+        req.id.toLowerCase().includes(query) ||
+        req.supplier.toLowerCase().includes(query) ||
+        req.debtor.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  };
 
   const getStatusText = (status: Request['status']) => {
     switch(status) {
@@ -37,6 +63,8 @@ export const Requests: React.FC = () => {
     }
   };
 
+  const filteredRequests = getFilteredRequests();
+
   return (
     <Layout>
       <DashboardHeader>
@@ -45,9 +73,15 @@ export const Requests: React.FC = () => {
       </DashboardHeader>
 
       <TabsContainer>
-        <TabItem $active={activeTab === 'all'} onClick={() => setActiveTab('all')}>Всі заявки</TabItem>
-        <TabItem $active={activeTab === 'pending'} onClick={() => setActiveTab('pending')}>На розгляді</TabItem>
-        <TabItem $active={activeTab === 'approved'} onClick={() => setActiveTab('approved')}>Схвалені</TabItem>
+        <TabItem $active={activeTab === 'all'} onClick={() => setActiveTab('all')}>
+          Всі заявки ({MOCK_REQUESTS.length})
+        </TabItem>
+        <TabItem $active={activeTab === 'pending'} onClick={() => setActiveTab('pending')}>
+          На розгляді ({MOCK_REQUESTS.filter(r => r.status === 'pending').length})
+        </TabItem>
+        <TabItem $active={activeTab === 'approved'} onClick={() => setActiveTab('approved')}>
+          Схвалені ({MOCK_REQUESTS.filter(r => r.status === 'approved').length})
+        </TabItem>
       </TabsContainer>
 
       <FilterBar>
@@ -55,11 +89,13 @@ export const Requests: React.FC = () => {
           <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input 
             type="text" 
-            placeholder="Пошук за ID, контрагентом..." 
+            placeholder="Пошук за ID, постачальником або дебітором..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             style={{ 
               width: '100%', 
               padding: '0.625rem 1rem 0.625rem 2.5rem', 
-              borderRadius: '0.375rem', 
+              borderRadius: '0.5rem', 
               border: '1px solid #d1d5db',
               fontSize: '0.875rem'
             }} 
@@ -69,7 +105,7 @@ export const Requests: React.FC = () => {
       </FilterBar>
 
       <TableContainer>
-        <TableHeader style={{ fontSize: '0.875rem' }}>Всього знайдено: {MOCK_REQUESTS.length}</TableHeader>
+        <TableHeader>Знайдено: {filteredRequests.length}</TableHeader>
         <Table>
           <thead>
             <tr>
@@ -83,7 +119,7 @@ export const Requests: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {MOCK_REQUESTS.map(req => (
+            {filteredRequests.map(req => (
               <tr 
                 key={req.id} 
                 onClick={() => navigate(`/requests/${req.id}`)}
@@ -96,7 +132,7 @@ export const Requests: React.FC = () => {
                 <Td>₴ {req.amount.toLocaleString()}</Td>
                 <Td><Badge $status={req.status}>{getStatusText(req.status)}</Badge></Td>
                 <Td style={{ textAlign: 'right' }}>
-                  <ActionButton onClick={(e) => { e.stopPropagation(); /* optional action menu */ }}>
+                  <ActionButton onClick={(e) => { e.stopPropagation(); }}>
                     <MoreHorizontal size={18} />
                   </ActionButton>
                 </Td>
