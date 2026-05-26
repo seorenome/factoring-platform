@@ -1,39 +1,39 @@
-import React, { useState } from 'react';
-import { useI18n } from '../../i18n/I18nContext';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
 import { FilterBar, Badge, ActionButton } from '../Requests/Requests.styled';
-import { Search, Filter, MoreHorizontal, Edit2, Check, X } from 'lucide-react';
-
-interface Limit {
-  id: string;
-  supplierName: string;
-  supplierEdrpou: string;
-  debtorName: string;
-  debtorEdrpou: string;
-  limitAmount: number;
-  usedAmount: number;
-  availableAmount: number;
-  status: 'active' | 'exceeded' | 'expired';
-}
-
-const MOCK_LIMITS: Limit[] = [
-  { id: 'LIM-001', supplierName: 'ТОВ "Постач-Пром"', supplierEdrpou: '12345678', debtorName: 'ТОВ "Рітейл Груп"', debtorEdrpou: '87654321', limitAmount: 1000000, usedAmount: 250000, availableAmount: 750000, status: 'active' },
-  { id: 'LIM-002', supplierName: 'ФОП Коваленко', supplierEdrpou: '32165498', debtorName: 'ТОВ "Еко-Маркет"', debtorEdrpou: '55555555', limitAmount: 500000, usedAmount: 500000, availableAmount: 0, status: 'exceeded' },
-  { id: 'LIM-003', supplierName: 'ТОВ "Західбуд"', supplierEdrpou: '99988877', debtorName: 'ПрАТ "Київміськбуд"', debtorEdrpou: '44444444', limitAmount: 2000000, usedAmount: 840000, availableAmount: 1160000, status: 'active' },
-];
+import { Search, Filter, MoreHorizontal, Edit2, Check, X, Loader2 } from 'lucide-react';
+import { api, Limit } from '../../services/api';
 
 export const Limits: React.FC = () => {
-  const { t } = useI18n();
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [limits, setLimits] = useState<Limit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState<number>(0);
 
-  const getStatusBadge = (status: Limit['status']) => {
+  useEffect(() => {
+    loadLimits();
+  }, []);
+
+  const loadLimits = async () => {
+    try {
+      const data = await api.getLimits();
+      setLimits(data);
+    } catch (error) {
+      console.error('Failed to load limits:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
     switch(status) {
       case 'active': return <Badge $status="approved">Активний</Badge>;
       case 'exceeded': return <Badge $status="rejected">Ліміт вичерпано</Badge>;
       case 'expired': return <Badge $status="pending">Прострочений</Badge>;
+      default: return <Badge $status="pending">{status}</Badge>;
     }
   };
 
@@ -42,10 +42,26 @@ export const Limits: React.FC = () => {
     setEditValue(limit.limitAmount);
   };
 
-  const handleSave = (id: string) => {
+  const handleSave = async (id: number) => {
+    // TODO: Implement update limit API
     console.log('Save limit', id, editValue);
     setEditingId(null);
   };
+
+  const filteredLimits = limits.filter(limit =>
+    limit.supplierName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    limit.debtorName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <Layout>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <Loader2 size={32} className="animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -60,6 +76,8 @@ export const Limits: React.FC = () => {
           <input 
             type="text" 
             placeholder="Пошук за постачальником або дебітором..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             style={{ 
               width: '100%', 
               padding: '0.625rem 1rem 0.625rem 2.5rem', 
@@ -73,7 +91,7 @@ export const Limits: React.FC = () => {
       </FilterBar>
 
       <TableContainer>
-        <TableHeader>Всі ліміти ({MOCK_LIMITS.length})</TableHeader>
+        <TableHeader>Всі ліміти ({filteredLimits.length})</TableHeader>
         <Table>
           <thead>
             <tr>
@@ -87,18 +105,16 @@ export const Limits: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {MOCK_LIMITS.map(limit => (
+            {filteredLimits.map(limit => (
               <tr key={limit.id}>
                 <Td>
                   <div>
                     <div style={{ fontWeight: 500 }}>{limit.supplierName}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{limit.supplierEdrpou}</div>
                   </div>
                 </Td>
                 <Td>
                   <div>
                     <div style={{ fontWeight: 500 }}>{limit.debtorName}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{limit.debtorEdrpou}</div>
                   </div>
                 </Td>
                 <Td>
