@@ -1,62 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useI18n } from '../../i18n/I18nContext';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { FilterBar } from '../Requests/Requests.styled';
 import { Button } from '../../components/Button/Button';
-import { Search, Filter, Download, User, Building2, FileText, CheckCircle, XCircle, Edit2 } from 'lucide-react';
-
-interface AuditEntry {
-  id: string;
-  timestamp: string;
-  userId: string;
-  userName: string;
-  userRole: 'factor' | 'supplier' | 'debtor' | 'admin';
-  action: string;
-  entityType: 'company' | 'request' | 'document' | 'user' | 'limit';
-  entityId: string;
-  entityName: string;
-  details: string;
-  ipAddress: string;
-}
-
-const MOCK_AUDIT: AuditEntry[] = [
-  { id: 'AUD-001', timestamp: '2026-05-13 14:32:15', userId: 'user-1', userName: 'Олена Петренко', userRole: 'factor', action: 'CREATE', entityType: 'request', entityId: 'REQ-005', entityName: 'Заявка #REQ-005', details: 'Створено нову заявку на факторинг', ipAddress: '192.168.1.1' },
-  { id: 'AUD-002', timestamp: '2026-05-13 11:20:43', userId: 'user-2', userName: 'Іван Коваленко', userRole: 'supplier', action: 'UPLOAD', entityType: 'document', entityId: 'DOC-201', entityName: 'Рахунок-фактура №156.pdf', details: 'Завантажено документ', ipAddress: '192.168.1.2' },
-  { id: 'AUD-003', timestamp: '2026-05-12 16:45:22', userId: 'user-1', userName: 'Олена Петренко', userRole: 'factor', action: 'UPDATE', entityType: 'limit', entityId: 'LIM-001', entityName: 'Ліміт ТОВ "Постач-Пром"', details: 'Змінено ліміт з 800,000 на 1,000,000', ipAddress: '192.168.1.1' },
-  { id: 'AUD-004', timestamp: '2026-05-12 10:15:07', userId: 'user-3', userName: 'Андрій Шевченко', userRole: 'admin', action: 'APPROVE', entityType: 'company', entityId: 'COMP-005', entityName: 'ТОВ "Нова Постака"', details: 'KYC/AML перевірку схвалено', ipAddress: '192.168.1.3' },
-  { id: 'AUD-005', timestamp: '2026-05-11 09:30:55', userId: 'user-4', userName: 'Марія Лисенко', userRole: 'debtor', action: 'SIGN', entityType: 'document', entityId: 'DOC-102', entityName: 'Видаткова_накладна_ВН-88.pdf', details: 'Підписано документ (КЕП)', ipAddress: '192.168.1.4' },
-  { id: 'AUD-006', timestamp: '2026-05-10 14:22:33', userId: 'user-1', userName: 'Олена Петренко', userRole: 'factor', action: 'REJECT', entityType: 'request', entityId: 'REQ-003', entityName: 'Заявка #REQ-003', details: 'Заявку відхилено (недостатній ліміт)', ipAddress: '192.168.1.1' },
-  { id: 'AUD-007', timestamp: '2026-05-09 11:45:18', userId: 'user-5', userName: 'Сергій Бондар', userRole: 'supplier', action: 'EDIT', entityType: 'document', entityId: 'DOC-101', entityName: 'Рахунок-фактура №142.pdf', details: 'Редаговано дані документа', ipAddress: '192.168.1.5' },
-];
-
-const getActionIcon = (action: AuditEntry['action']) => {
-  switch(action) {
-    case 'CREATE': return <CheckCircle size={16} color="#10b981" />;
-    case 'UPDATE':
-    case 'EDIT': return <Edit2 size={16} color="#f59e0b" />;
-    case 'DELETE': return <XCircle size={16} color="#ef4444" />;
-    case 'APPROVE':
-    case 'SIGN': return <CheckCircle size={16} color="#10b981" />;
-    case 'REJECT': return <XCircle size={16} color="#ef4444" />;
-    case 'UPLOAD': return <FileText size={16} color="#3b82f6" />;
-    default: return <FileText size={16} color="#6b7280" />;
-  }
-};
-
-const getEntityIcon = (type: AuditEntry['entityType']) => {
-  switch(type) {
-    case 'company': return <Building2 size={16} color="#6b7280" />;
-    case 'user': return <User size={16} color="#6b7280" />;
-    case 'document': return <FileText size={16} color="#6b7280" />;
-    default: return <FileText size={16} color="#6b7280" />;
-  }
-};
+import { Search, Filter, Download, User, Building2, FileText, CheckCircle, XCircle, Edit2, Loader2 } from 'lucide-react';
+import { api, AuditEntry } from '../../services/api';
 
 export const AuditLog: React.FC = () => {
   const { t } = useI18n();
+  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [audit, setAudit] = useState(MOCK_AUDIT);
+
+  useEffect(() => {
+    loadAudit();
+  }, []);
+
+  const loadAudit = async () => {
+    try {
+      const data = await api.getAudit();
+      setAudit(data);
+    } catch (error) {
+      console.error('Failed to load audit:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getActionIcon = (action: string) => {
+    switch(action) {
+      case 'CREATE': return <CheckCircle size={16} color="#10b981" />;
+      case 'UPDATE':
+      case 'EDIT': return <Edit2 size={16} color="#f59e0b" />;
+      case 'DELETE': return <XCircle size={16} color="#ef4444" />;
+      case 'APPROVE':
+      case 'SIGN': return <CheckCircle size={16} color="#10b981" />;
+      case 'REJECT': return <XCircle size={16} color="#ef4444" />;
+      case 'LOGIN': return <User size={16} color="#3b82f6" />;
+      default: return <FileText size={16} color="#6b7280" />;
+    }
+  };
+
+  const getEntityIcon = (type: string) => {
+    switch(type) {
+      case 'company': return <Building2 size={16} color="#6b7280" />;
+      case 'user': return <User size={16} color="#6b7280" />;
+      case 'request': return <FileText size={16} color="#6b7280" />;
+      case 'auth': return <User size={16} color="#6b7280" />;
+      default: return <FileText size={16} color="#6b7280" />;
+    }
+  };
 
   const filteredAudit = audit.filter(entry =>
     entry.userName.toLowerCase().includes(search.toLowerCase()) ||
@@ -67,7 +61,7 @@ export const AuditLog: React.FC = () => {
   const exportToCSV = () => {
     const headers = ['ID', 'Час', 'Користувач', 'Роль', 'Дія', 'Тип', 'Об\'єкт', 'Деталі', 'IP'];
     const rows = filteredAudit.map(entry => [
-      entry.id, entry.timestamp, entry.userName, entry.userRole, entry.action,
+      entry.id, entry.createdAt, entry.userName, entry.userRole, entry.action,
       entry.entityType, entry.entityName, entry.details, entry.ipAddress
     ]);
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -80,24 +74,22 @@ export const AuditLog: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const getActionLabel = (action: string) => {
-    return t.audit.actions[action as keyof typeof t.audit.actions] || action;
-  };
-
-  const getEntityTypeLabel = (type: string) => {
-    return t.audit.entityTypes[type as keyof typeof t.audit.entityTypes] || type;
-  };
-
-  const getRoleLabel = (role: string) => {
-    return t.roles[role as keyof typeof t.roles] || role;
-  };
+  if (loading) {
+    return (
+      <Layout>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <Loader2 size={32} className="animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
       <DashboardHeader>
-        <Title>{t.audit.title}</Title>
+        <Title>Журнал аудиту</Title>
         <Button variant="outline" icon={<Download size={16} />} onClick={exportToCSV}>
-          {t.audit.export}
+          Експортувати CSV
         </Button>
       </DashboardHeader>
 
@@ -106,7 +98,7 @@ export const AuditLog: React.FC = () => {
           <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
-            placeholder={t.audit.searchPlaceholder}
+            placeholder="Пошук за користувачем, об'єктом або дією..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
@@ -122,37 +114,37 @@ export const AuditLog: React.FC = () => {
       </FilterBar>
 
       <TableContainer>
-        <TableHeader>{t.audit.totalRecords}: {filteredAudit.length}</TableHeader>
+        <TableHeader>Всього записів: {filteredAudit.length}</TableHeader>
         <Table>
           <thead>
             <tr>
-              <Th>{t.audit.columns.time}</Th>
-              <Th>{t.audit.columns.user}</Th>
-              <Th>{t.audit.columns.action}</Th>
-              <Th>{t.audit.columns.type}</Th>
-              <Th>{t.audit.columns.object}</Th>
-              <Th>{t.audit.columns.details}</Th>
-              <Th>{t.audit.columns.ip}</Th>
+              <Th>Час</Th>
+              <Th>Користувач</Th>
+              <Th>Дія</Th>
+              <Th>Тип</Th>
+              <Th>Об'єкт</Th>
+              <Th>Деталі</Th>
+              <Th>IP</Th>
             </tr>
           </thead>
           <tbody>
             {filteredAudit.map(entry => (
               <tr key={entry.id}>
-                <Td style={{ fontSize: '0.75rem', color: '#6b7280' }}>{entry.timestamp}</Td>
+                <Td style={{ fontSize: '0.75rem', color: '#6b7280' }}>{new Date(entry.createdAt).toLocaleString()}</Td>
                 <Td>
                   <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{entry.userName}</div>
-                  <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>{getRoleLabel(entry.userRole)}</div>
+                  <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>{entry.userRole}</div>
                 </Td>
                 <Td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {getActionIcon(entry.action)}
-                    <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>{getActionLabel(entry.action)}</span>
+                    <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>{entry.action}</span>
                   </div>
                 </Td>
                 <Td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {getEntityIcon(entry.entityType)}
-                    <span style={{ fontSize: '0.875rem' }}>{getEntityTypeLabel(entry.entityType)}</span>
+                    <span style={{ fontSize: '0.875rem' }}>{entry.entityType}</span>
                   </div>
                 </Td>
                 <Td>
