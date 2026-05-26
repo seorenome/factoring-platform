@@ -1,37 +1,72 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useI18n } from '../../i18n/I18nContext';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
 import { FilterBar, Badge, ActionButton } from '../Requests/Requests.styled';
-import { Search, Filter, MoreHorizontal, Plus } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Plus, Loader2 } from 'lucide-react';
+import { api } from '../../services/api';
 
 interface Company {
-  id: string;
+  id: number;
   name: string;
   edrpou: string;
-  role: 'Постачальник' | 'Дебітор' | 'Обидва';
   kycStatus: 'approved' | 'pending' | 'rejected';
-  limit: number | null;
+  createdAt: string;
 }
-
-const MOCK_COMPANIES: Company[] = [
-  { id: 'COMP-001', name: 'ТОВ "Постач-Пром"', edrpou: '12345678', role: 'Постачальник', kycStatus: 'approved', limit: 1000000 },
-  { id: 'COMP-002', name: 'ТОВ "Рітейл Груп"', edrpou: '87654321', role: 'Дебітор', kycStatus: 'approved', limit: 5000000 },
-  { id: 'COMP-003', name: 'ФОП Коваленко', edrpou: '32165498', role: 'Постачальник', kycStatus: 'pending', limit: null },
-  { id: 'COMP-004', name: 'ТОВ "Агроінвест"', edrpou: '99887766', role: 'Обидва', kycStatus: 'approved', limit: 2500000 },
-];
 
 export const Companies: React.FC = () => {
   const { t } = useI18n();
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  const loadCompanies = async () => {
+    try {
+      const data = await api.getCompanies();
+      setCompanies(data);
+    } catch (error) {
+      console.error('Failed to load companies:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: Company['kycStatus']) => {
     switch(status) {
       case 'approved': return <Badge $status="approved">KYC Пройдено</Badge>;
       case 'pending': return <Badge $status="pending">На перевірці</Badge>;
       case 'rejected': return <Badge $status="rejected">Відхилено</Badge>;
+      default: return <Badge $status="pending">{status}</Badge>;
     }
   };
+
+  const getRoleLabel = (name: string, edrpou: string) => {
+    if (edrpou === '87654321') return 'Дебітор';
+    if (edrpou === '12345678') return 'Постачальник';
+    if (edrpou === '55555555') return 'Дебітор';
+    if (edrpou === '32165498') return 'Постачальник';
+    return 'Учасник';
+  };
+
+  const filteredCompanies = companies.filter(company =>
+    company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    company.edrpou.includes(searchQuery)
+  );
+
+  if (loading) {
+    return (
+      <Layout>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <Loader2 size={32} className="animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -46,6 +81,8 @@ export const Companies: React.FC = () => {
           <input 
             type="text" 
             placeholder="Пошук за назвою або ЄДРПОУ..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             style={{ 
               width: '100%', 
               padding: '0.625rem 1rem 0.625rem 2.5rem', 
@@ -59,26 +96,26 @@ export const Companies: React.FC = () => {
       </FilterBar>
 
       <TableContainer>
-        <TableHeader style={{ fontSize: '0.875rem' }}>Всі компанії ({MOCK_COMPANIES.length})</TableHeader>
+        <TableHeader>Всі компанії ({filteredCompanies.length})</TableHeader>
         <Table>
           <thead>
             <tr>
               <Th>Назва</Th>
               <Th>ЄДРПОУ</Th>
               <Th>Роль</Th>
-              <Th>Ліміт</Th>
               <Th>KYC / AML Статус</Th>
+              <Th>Дата реєстрації</Th>
               <Th></Th>
             </tr>
           </thead>
           <tbody>
-            {MOCK_COMPANIES.map(company => (
+            {filteredCompanies.map(company => (
               <tr key={company.id}>
                 <Td style={{ fontWeight: 600, color: '#111827' }}>{company.name}</Td>
                 <Td>{company.edrpou}</Td>
-                <Td>{company.role}</Td>
-                <Td>{company.limit ? `₴ ${company.limit.toLocaleString()}` : '-'}</Td>
+                <Td>{getRoleLabel(company.name, company.edrpou)}</Td>
                 <Td>{getStatusBadge(company.kycStatus)}</Td>
+                <Td>{new Date(company.createdAt).toLocaleDateString()}</Td>
                 <Td style={{ textAlign: 'right' }}>
                   <ActionButton>
                     <MoreHorizontal size={18} />

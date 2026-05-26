@@ -24,6 +24,41 @@ export interface Request {
   createdAt: string;
 }
 
+export interface Company {
+  id: number;
+  name: string;
+  edrpou: string;
+  kycStatus: 'approved' | 'pending' | 'rejected';
+  createdAt: string;
+}
+
+export interface Limit {
+  id: number;
+  supplierId: number;
+  supplierName: string;
+  debtorId: number;
+  debtorName: string;
+  limitAmount: number;
+  usedAmount: number;
+  availableAmount: number;
+  status: string;
+  createdAt: string;
+}
+
+export interface AuditEntry {
+  id: number;
+  userId: number;
+  userName: string;
+  userRole: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  entityName: string;
+  details: string;
+  ipAddress: string;
+  createdAt: string;
+}
+
 class ApiService {
   private token: string | null = null;
 
@@ -90,6 +125,11 @@ class ApiService {
     return this.request('/requests');
   }
 
+  async getRequestById(id: number): Promise<Request | null> {
+    const requests = await this.getRequests();
+    return requests.find(r => r.id === id) || null;
+  }
+
   async createRequest(data: Omit<Request, 'id' | 'createdAt'>): Promise<Request> {
     return this.request('/requests', {
       method: 'POST',
@@ -97,24 +137,24 @@ class ApiService {
     });
   }
 
-  async getLimits(): Promise<any[]> {
+  async approveRequest(id: number, financingAmount: number): Promise<void> {
+    return this.request(`/requests/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ financingAmount }),
+    });
+  }
+
+  async getLimits(): Promise<Limit[]> {
     return this.request('/limits');
   }
 
-  async getCompanies(): Promise<any[]> {
+  async getCompanies(): Promise<Company[]> {
     return this.request('/companies');
   }
 
-  async getAudit(): Promise<any[]> {
+  async getAudit(): Promise<AuditEntry[]> {
     return this.request('/audit');
   }
-
-  async approveRequest(id: number, financingAmount: number): Promise<void> {
-  return this.request(`/requests/${id}/approve`, {
-    method: 'POST',
-    body: JSON.stringify({ financingAmount }),
-  });
-}
 }
 
 export const api = new ApiService();
