@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
+import { useAuth } from '../../contexts/AuthContext';
+import { api } from '../../services/api';
 import {
   FormContainer,
   FormHeader,
@@ -31,7 +33,7 @@ import {
   SummaryLabel,
   SummaryValue
 } from './CreateRequest.styled';
-import { FileText, ArrowLeft, ArrowRight, Save, ClipboardList, TrendingUp } from 'lucide-react';
+import { FileText, ArrowLeft, ArrowRight, Save, TrendingUp } from 'lucide-react';
 
 interface MockDoc {
   id: string;
@@ -89,7 +91,9 @@ const MOCK_DOCUMENTS: MockDoc[] = [
 
 export const CreateRequest: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   // Step 1: Document selection states
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
@@ -99,14 +103,14 @@ export const CreateRequest: React.FC = () => {
   // Step 2: Debtor states
   const [debtorName, setDebtorName] = useState('');
   const [debtorEdrpou, setDebtorEdrpou] = useState('');
-  const [paymentDate, setPaymentDate] = useState('25.07.2026'); // Target payment date
+  const [paymentDate, setPaymentDate] = useState('');
 
   // Step 3: Financing & Calculator parameters
   const [factoringType, setFactoringType] = useState<'classical' | 'reverse' | 'closed'>('classical');
   const [recourseType, setRecourseType] = useState<'recourse' | 'non-recourse'>('recourse');
   const [financingPercent, setFinancingPercent] = useState(80);
-  const [interestRate, setInterestRate] = useState(18); // %
-  const [commissionRate, setCommissionRate] = useState(1.5); // %
+  const [interestRate, setInterestRate] = useState(18);
+  const [commissionRate, setCommissionRate] = useState(1.5);
 
   // Populate debtor information automatically when documents are chosen
   useEffect(() => {
@@ -119,7 +123,6 @@ export const CreateRequest: React.FC = () => {
     }
   }, [selectedDocIds]);
 
-  // Initializing custom amounts when selecting documents
   const toggleDocSelection = (docId: string) => {
     const doc = MOCK_DOCUMENTS.find(d => d.id === docId);
     if (!doc) return;
@@ -146,7 +149,6 @@ export const CreateRequest: React.FC = () => {
     setDocAmounts(prev => ({ ...prev, [docId]: cleaned }));
   };
 
-  // Math conversions
   const calculateTotalAmount = () => {
     return selectedDocIds.reduce((sum, docId) => sum + (docAmounts[docId] || 0), 0);
   };
@@ -155,55 +157,53 @@ export const CreateRequest: React.FC = () => {
   const financingAmount = (totalAmount * financingPercent) / 100;
   const commissionAmount = (totalAmount * commissionRate) / 100;
   const yearlyInterest = (financingAmount * interestRate) / 100;
-  const monthInterest = yearlyInterest / 12; // Estimation for 30 days
+  const monthInterest = yearlyInterest / 12;
 
-  // Saving request to localStorage and appending to active requests
-  const handleSubmit = () => {
-    // Determine Supplier
-    let supplierName = 'ТОВ "Постач-Пром"';
-    if (selectedDocIds.length > 0) {
-      const firstDoc = MOCK_DOCUMENTS.find(doc => doc.id === selectedDocIds[0]);
-      if (firstDoc) {
-        supplierName = firstDoc.supplier;
-      }
-    }
-
-    const newRequest = {
-      id: `REQ-00${Math.floor(Math.random() * 900) + 100}`,
-      date: new Date().toISOString().slice(0, 10),
-      supplier: supplierName,
-      debtor: debtorName || 'ТОВ "Новий Дебітор"',
-      amount: totalAmount,
-      status: 'pending' as const
-    };
-
-    // Retrieve, append, and save
-    const currentList = localStorage.getItem('factoring_requests');
-    let list = [];
-    if (currentList) {
-      try {
-        list = JSON.parse(currentList);
-      } catch (e) {
-        console.error(e);
-      }
-    } else {
-      // populate with matching mocks
-      list = [
-        { id: 'REQ-001', date: '2026-05-08', supplier: 'ТОВ "Постач-Пром"', debtor: 'ТОВ "Рітейл Груп"', amount: 250000, status: 'pending' },
-        { id: 'REQ-002', date: '2026-05-07', supplier: 'ФОП Коваленко', debtor: 'ТОВ "Еко-Маркет"', amount: 120000, status: 'approved' },
-        { id: 'REQ-003', date: '2026-05-05', supplier: 'ТОВ "Західбуд"', debtor: 'ПрАТ "Київміськбуд"', amount: 840000, status: 'rejected' },
-        { id: 'REQ-004', date: '2026-05-08', supplier: 'ТОВ "Торг-Майстер"', debtor: 'ТОВ "Агроінвест"', amount: 45000, status: 'draft' }
-      ];
-    }
-
-    list.unshift(newRequest);
-    localStorage.setItem('factoring_requests', JSON.stringify(list));
-
-    // Redirect to Requests Log page
-    navigate('/requests');
+  const generateRequestNumber = () => {
+    const random = Math.floor(Math.random() * 900) + 100;
+    return `REQ-${random}`;
   };
 
-  // Label helpers
+  const handleSubmit = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    
+    const firstDoc = MOCK_DOCUMENTS.find(doc => doc.id === selectedDocIds[0]);
+    const supplierId = user.id;
+    const supplierName = firstDoc?.supplier || 'Невідомий постачальник';
+    const debtorId = 1; // Тимчасово hardcode
+    const requestNumber = generateRequestNumber();
+
+    const requestData = {
+      requestNumber,
+      supplierId,
+      supplierName,
+      debtorId,
+      debtorName,
+      debtorEdrpou,
+      amount: totalAmount,
+      financingAmount,
+      factoringType,
+      recourseType,
+      paymentDate,
+      status: 'pending'
+    };
+
+    try {
+      await api.createRequest(requestData);
+      navigate('/requests');
+    } catch (error) {
+      console.error('Failed to create request:', error);
+      alert('Помилка при створенні заявки');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add createRequest to api service
+  // Note: This method already exists in api.ts
+
   const getTypeNameCapital = (type: string) => {
     if (type === 'classical') return 'Класичний';
     if (type === 'reverse') return 'Реверсивний';
@@ -262,7 +262,6 @@ export const CreateRequest: React.FC = () => {
         </FormHeader>
 
         <FormBody>
-          {/* STEP 1: Select documents */}
           {currentStep === 1 && (
             <div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>Крок 1: Виберіть документи для факторингу</h3>
@@ -304,7 +303,6 @@ export const CreateRequest: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Partial Use Actions */}
                       {isSelected && (
                         <div
                           onClick={(e) => e.stopPropagation()}
@@ -324,7 +322,7 @@ export const CreateRequest: React.FC = () => {
                               checked={isPartial}
                               onChange={(e) => handlePartialCheck(doc.id, e.target.checked, doc.amount)}
                             />
-                            Часткове використання (п. 2.4 ТЗ)
+                            Часткове використання
                           </label>
 
                           {isPartial && (
@@ -355,7 +353,6 @@ export const CreateRequest: React.FC = () => {
             </div>
           )}
 
-          {/* STEP 2: Debtor details */}
           {currentStep === 2 && (
             <div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>Крок 2: Інформація про дебітора та платіж</h3>
@@ -387,23 +384,21 @@ export const CreateRequest: React.FC = () => {
                 <FormGroup>
                   <FormLabel>Дата платежу за договором</FormLabel>
                   <FormInput
-                    type="text"
+                    type="date"
                     value={paymentDate}
                     onChange={(e) => setPaymentDate(e.target.value)}
-                    placeholder="ДД.ММ.РРРР"
                   />
                 </FormGroup>
               </TwoColGrid>
             </div>
           )}
 
-          {/* STEP 3: Parameters & Calculator */}
           {currentStep === 3 && (
             <div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>Крок 3: Вибір типу та Калькулятор фінансування</h3>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <FormLabel style={{ display: 'block', marginBottom: '0.75rem' }}>Тип факторингу (п. 2.2 ТЗ)</FormLabel>
+                <FormLabel style={{ display: 'block', marginBottom: '0.75rem' }}>Тип факторингу</FormLabel>
                 <ChoiceGrid style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                   <FactoringTypeCard
                     $selected={factoringType === 'classical'}
@@ -430,7 +425,7 @@ export const CreateRequest: React.FC = () => {
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <FormLabel style={{ display: 'block', marginBottom: '0.75rem' }}>Вибір підтипу (п. 2.2.1 ТЗ)</FormLabel>
+                <FormLabel style={{ display: 'block', marginBottom: '0.75rem' }}>Вибір підтипу</FormLabel>
                 <ChoiceGrid>
                   <ChoiceButton
                     $selected={recourseType === 'recourse'}
@@ -483,7 +478,7 @@ export const CreateRequest: React.FC = () => {
               <CalcCard>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                   <TrendingUp size={18} color="#2563eb" />
-                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#2563eb' }}>Онлайн-калькулятор (п. 3.3.1.5)</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#2563eb' }}>Онлайн-калькулятор</span>
                 </div>
                 <CalcRow>
                   <span>Загальна сума інвойсів:</span>
@@ -509,7 +504,6 @@ export const CreateRequest: React.FC = () => {
             </div>
           )}
 
-          {/* STEP 4: Confirmation */}
           {currentStep === 4 && (
             <div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>Крок 4: Перевірка та завершення</h3>
@@ -601,8 +595,8 @@ export const CreateRequest: React.FC = () => {
               Продовжити
             </Button>
           ) : (
-            <Button icon={<Save size={16} />} onClick={handleSubmit}>
-              Підтвердити та відправити
+            <Button icon={<Save size={16} />} onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Відправлення...' : 'Підтвердити та відправити'}
             </Button>
           )}
         </FormFooter>

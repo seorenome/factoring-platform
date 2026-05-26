@@ -260,8 +260,59 @@ app.get('/api/audit', async (req, res) => {
   res.json(audit);
 });
 
+app.post('/api/requests/:id/approve', async (req, res) => {
+  const { id } = req.params;
+  const { financingAmount } = req.body;
+  
+  try {
+    await db.run('BEGIN TRANSACTION');
+    
+    await db.run('UPDATE requests SET status = ? WHERE id = ?', ['approved', id]);
+    
+    const request = await db.get('SELECT * FROM requests WHERE id = ?', [id]);
+    
+    await db.run(
+      `INSERT INTO audit_log (userId, userName, userRole, action, entityType, entityId, entityName, details, ipAddress)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [1, 'Фактор', 'factor', 'APPROVE', 'request', String(id), `Заявка ${request?.requestNumber}`, `Схвалено на суму ${financingAmount}`, req.ip || 'unknown']
+    );
+    
+    await db.run('COMMIT');
+    res.json({ success: true });
+  } catch (error) {
+    await db.run('ROLLBACK');
+    res.status(500).json({ error: 'Transaction failed' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+app.post('/api/requests', async (req, res) => {
+  const { requestNumber, supplierId, supplierName, debtorId, debtorName, debtorEdrpou, amount, financingAmount, factoringType, recourseType, paymentDate } = req.body;
+  
+  try {
+    const result = await db.run(
+      `INSERT INTO requests (requestNumber, supplierId, supplierName, debtorId, debtorName, debtorEdrpou, amount, financingAmount, factoringType, recourseType, status, paymentDate, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [requestNumber, supplierId, supplierName, debtorId, debtorName, debtorEdrpou, amount, financingAmount, factoringType, recourseType, 'pending', paymentDate, new Date().toISOString()]
+    );
+    
+    // Log to audit
+    const user = await db.get('SELECT * FROM users WHERE id = ?', [supplierId]);
+    await db.run(
+      `INSERT INTO audit_log (userId, userName, userRole, action, entityType, entityId, entityName, details, ipAddress)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [supplierId, supplierName, user?.role || 'supplier', 'CREATE', 'request', requestNumber, `Заявка ${requestNumber}`, 'Створено нову заявку', req.ip || 'unknown']
+    );
+    
+    res.json({ id: result.lastID, success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create request' });
+  }
+});
+
 initDb().catch(console.error);
+

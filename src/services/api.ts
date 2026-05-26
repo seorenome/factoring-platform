@@ -12,9 +12,15 @@ export interface Request {
   requestNumber: string;
   supplierId: number;
   supplierName: string;
+  debtorId: number;
   debtorName: string;
+  debtorEdrpou: string;
   amount: number;
+  financingAmount: number;
+  factoringType: string;
+  recourseType: string;
   status: 'pending' | 'approved' | 'rejected' | 'draft';
+  paymentDate: string;
   createdAt: string;
 }
 
@@ -84,12 +90,31 @@ class ApiService {
     return this.request('/requests');
   }
 
-  async createRequest(data: Partial<Request>): Promise<Request> {
+  async createRequest(data: Omit<Request, 'id' | 'createdAt'>): Promise<Request> {
     return this.request('/requests', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
+
+  async getLimits(): Promise<any[]> {
+    return this.request('/limits');
+  }
+
+  async getCompanies(): Promise<any[]> {
+    return this.request('/companies');
+  }
+
+  async getAudit(): Promise<any[]> {
+    return this.request('/audit');
+  }
+
+  async approveRequest(id: number, financingAmount: number): Promise<void> {
+  return this.request(`/requests/${id}/approve`, {
+    method: 'POST',
+    body: JSON.stringify({ financingAmount }),
+  });
+}
 }
 
 export const api = new ApiService();
