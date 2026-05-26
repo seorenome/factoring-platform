@@ -34,14 +34,12 @@ export const Requests: React.FC = () => {
   const getFilteredRequests = () => {
     let filtered = MOCK_REQUESTS;
 
-    // Фільтрація по вкладках
     if (activeTab === 'pending') {
       filtered = filtered.filter(req => req.status === 'pending');
     } else if (activeTab === 'approved') {
       filtered = filtered.filter(req => req.status === 'approved');
     }
 
-    // Пошук по ID, постачальнику або дебітору
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(req =>
@@ -69,7 +67,9 @@ export const Requests: React.FC = () => {
     <Layout>
       <DashboardHeader>
         <Title>{t.common.requests}</Title>
-        <Button icon={<FilePlus size={16} />}>Створити заявку</Button>
+        <Button icon={<FilePlus size={16} />} onClick={() => navigate('/requests/create')}>
+          Створити заявку
+        </Button>
       </DashboardHeader>
 
       <TabsContainer>

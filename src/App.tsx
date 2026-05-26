@@ -9,6 +9,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { Dashboard } from './pages/Dashboard/Dashboard';
 import { Requests } from './pages/Requests/Requests';
 import { RequestDetails } from './pages/RequestDetails/RequestDetails';
+import { CreateRequest } from './pages/CreateRequest/CreateRequest';
 import { Documents } from './pages/Documents/Documents';
 import { Companies } from './pages/Companies/Companies';
 import { PlaceholderPage } from './pages/PlaceholderPage/PlaceholderPage';
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/requests" element={<Requests />} />
             <Route path="/requests/:id" element={<RequestDetails />} />
+            <Route path="/requests/create" element={<CreateRequest />} />
             <Route path="/documents" element={<Documents />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/users" element={<PlaceholderPage title="Користувачі" />} />
