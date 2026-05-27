@@ -56,14 +56,12 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  // Calculate KPIs
   const activeRequests = requests.filter(r => r.status === 'pending');
   const approvedRequests = requests.filter(r => r.status === 'approved');
   const totalPortfolio = approvedRequests.reduce((sum, r) => sum + r.financingAmount, 0);
   const totalUsedLimits = limits.reduce((sum, l) => sum + l.usedAmount, 0);
   const totalAvailableLimits = limits.reduce((sum, l) => sum + l.availableAmount, 0);
   
-  // Overdue calculation (paymentDate < today)
   const today = new Date();
   const overdueRequests = requests.filter(r => {
     if (!r.paymentDate || r.status !== 'approved') return false;
@@ -71,7 +69,6 @@ export const Dashboard: React.FC = () => {
   });
   const totalOverdue = overdueRequests.reduce((sum, r) => sum + r.financingAmount, 0);
 
-  // Chart data: monthly financing trend
   const getMonthlyData = () => {
     const months = ['Січ', 'Лют', 'Бер', 'Кві', 'Тра', 'Чер', 'Лип', 'Сер', 'Вер', 'Жов', 'Лис', 'Гру'];
     const currentYear = new Date().getFullYear();
@@ -90,20 +87,18 @@ export const Dashboard: React.FC = () => {
     });
   };
 
-  // Pie chart data: factoring types distribution
   const getFactoringTypeData = () => {
     const classical = requests.filter(r => r.factoringType === 'classical').length;
     const reverse = requests.filter(r => r.factoringType === 'reverse').length;
     const closed = requests.filter(r => r.factoringType === 'closed').length;
     
     return [
-      { name: 'Класичний', value: classical, color: '#2563eb' },
-      { name: 'Реверсивний', value: reverse, color: '#10b981' },
-      { name: 'Закритий', value: closed, color: '#f59e0b' },
+      { name: t.createRequest.classical, value: classical, color: '#2563eb' },
+      { name: t.createRequest.reverse, value: reverse, color: '#10b981' },
+      { name: t.createRequest.closed, value: closed, color: '#f59e0b' },
     ];
   };
 
-  // Top 5 debtors
   const getTopDebtors = () => {
     const debtorMap = new Map<string, number>();
     approvedRequests.forEach(r => {
@@ -135,100 +130,95 @@ export const Dashboard: React.FC = () => {
     <Layout>
       <DashboardHeader>
         <Title>{t.dashboard.title}</Title>
-        <Button onClick={() => navigate('/requests/create')}>Створити заявку</Button>
+        <Button onClick={() => navigate('/requests/create')}>{t.common.createRequest}</Button>
       </DashboardHeader>
 
-      {/* KPI Cards */}
       <Grid>
-        <Card title="Активні заявки" value={activeRequests.length}>
+        <Card title={t.dashboard.activeRequests} value={activeRequests.length}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
             <Clock size={16} color="#f59e0b" />
             <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-              Очікують розгляду
+              {t.dashboard.pendingReview}
             </span>
           </div>
         </Card>
-        <Card title="Загальний портфель" value={`₴ ${(totalPortfolio / 1000000).toFixed(1)} млн`}>
+        <Card title={t.dashboard.portfolio} value={`₴ ${(totalPortfolio / 1000000).toFixed(1)} млн`}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
             <TrendingUp size={16} color="#10b981" />
             <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 500 }}>
-              {approvedRequests.length} схвалених заявок
+              {approvedRequests.length} {t.dashboard.approvedRequests}
             </span>
           </div>
         </Card>
-        <Card title="Використані ліміти" value={`₴ ${(totalUsedLimits / 1000000).toFixed(1)} млн`}>
+        <Card title={t.dashboard.usedLimits} value={`₴ ${(totalUsedLimits / 1000000).toFixed(1)} млн`}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
             <TrendingDown size={16} color="#2563eb" />
             <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-              Доступно: ₴ {(totalAvailableLimits / 1000000).toFixed(1)} млн
+              {t.dashboard.available}: ₴ {(totalAvailableLimits / 1000000).toFixed(1)} млн
             </span>
           </div>
         </Card>
-        <Card title="Прострочення" value={`₴ ${(totalOverdue / 1000000).toFixed(1)} млн`}>
+        <Card title={t.dashboard.overdue} value={`₴ ${(totalOverdue / 1000000).toFixed(1)} млн`}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
             <AlertTriangle size={16} color={totalOverdue > 0 ? '#ef4444' : '#10b981'} />
             <span style={{ fontSize: '0.75rem', color: totalOverdue > 0 ? '#ef4444' : '#10b981', fontWeight: 500 }}>
-              {overdueRequests.length} прострочених платежів
+              {overdueRequests.length} {t.dashboard.overduePayments}
             </span>
           </div>
         </Card>
       </Grid>
 
-{/* Charts Row */}
-<Grid style={{ gridTemplateColumns: '1fr 1fr', minWidth: 0 }}>
-  {/* Monthly Financing Chart */}
-  <TableContainer>
-    <TableHeader>Динаміка фінансування (млн ₴)</TableHeader>
-    <div style={{ padding: '1rem', height: '280px', width: '100%' }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={monthlyData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="month" />
-          <YAxis />
-          <Tooltip formatter={(value) => [`${value} млн ₴`, 'Фінансування']} />
-          <Legend />
-          <Line type="monotone" dataKey="financed" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 4 }} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  </TableContainer>
+      <Grid style={{ gridTemplateColumns: '1fr 1fr', minWidth: 0 }}>
+        <TableContainer>
+          <TableHeader>{t.dashboard.monthlyTrend}</TableHeader>
+          <div style={{ padding: '1rem', height: '280px', width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip formatter={(value) => [`${value} млн ₴`, t.dashboard.totalFinanced]} />
+                <Legend />
+                <Line type="monotone" dataKey="financed" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </TableContainer>
 
-  {/* Factoring Type Distribution */}
-  <TableContainer>
-    <TableHeader>Розподіл за типами факторингу</TableHeader>
-    <div style={{ padding: '1rem', height: '280px', width: '100%' }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={factoringTypeData}
-            cx="50%"
-            cy="50%"
-            innerRadius={50}
-            outerRadius={90}
-            paddingAngle={5}
-            dataKey="value"
-            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-          >
-            {factoringTypeData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
-            ))}
-          </Pie>
-          <Tooltip />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
-  </TableContainer>
-</Grid>
+        <TableContainer>
+          <TableHeader>{t.dashboard.distribution}</TableHeader>
+          <div style={{ padding: '1rem', height: '280px', width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={factoringTypeData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={90}
+                  paddingAngle={5}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {factoringTypeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </TableContainer>
+      </Grid>
 
-      {/* Top 5 Debtors */}
       <TableContainer style={{ marginBottom: '2rem' }}>
-        <TableHeader>Топ-5 дебіторів за обсягом фінансування</TableHeader>
+        <TableHeader>{t.dashboard.topDebtors}</TableHeader>
         <Table>
           <thead>
             <tr>
-              <Th>Дебітор</Th>
-              <Th>Сума фінансування</Th>
-              <Th>Частка</Th>
+              <Th>{t.companies.name}</Th>
+              <Th>{t.dashboard.totalFinanced}</Th>
+              <Th>{t.audit.columns.details}</Th>
             </tr>
           </thead>
           <tbody>
@@ -254,25 +244,24 @@ export const Dashboard: React.FC = () => {
               })
             ) : (
               <tr>
-                <Td colSpan={3} style={{ textAlign: 'center', color: '#6b7280' }}>Немає даних</Td>
+                <Td colSpan={3} style={{ textAlign: 'center', color: '#6b7280' }}>{t.common.noData}</Td>
               </tr>
             )}
           </tbody>
         </Table>
       </TableContainer>
 
-      {/* Active Requests Table */}
       <TableContainer>
-        <TableHeader>Активні заявки на факторинг ({activeRequests.length})</TableHeader>
+        <TableHeader>{t.dashboard.activeRequestsTable} ({activeRequests.length})</TableHeader>
         <Table>
           <thead>
             <tr>
-              <Th>ID</Th>
-              <Th>Постачальник</Th>
-              <Th>Дебітор</Th>
-              <Th>Сума</Th>
-              <Th>Тип</Th>
-              <Th>Статус</Th>
+              <Th>{t.requests.id}</Th>
+              <Th>{t.requests.supplier}</Th>
+              <Th>{t.requests.debtor}</Th>
+              <Th>{t.requests.amount}</Th>
+              <Th>{t.requests.factoringType}</Th>
+              <Th>{t.requests.status}</Th>
             </tr>
           </thead>
           <tbody>
@@ -284,21 +273,21 @@ export const Dashboard: React.FC = () => {
                   <Td>{req.debtorName}</Td>
                   <Td>₴ {(req.amount / 1000000).toFixed(2)} млн</Td>
                   <Td>
-                    {req.factoringType === 'classical' && 'Класичний'}
-                    {req.factoringType === 'reverse' && 'Реверсивний'}
-                    {req.factoringType === 'closed' && 'Закритий'}
+                    {req.factoringType === 'classical' && t.createRequest.classical}
+                    {req.factoringType === 'reverse' && t.createRequest.reverse}
+                    {req.factoringType === 'closed' && t.createRequest.closed}
                   </Td>
                   <Td>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 500, backgroundColor: '#fef3c7', color: '#92400e' }}>
                       <Clock size={12} />
-                      На розгляді
+                      {t.requests.pending}
                     </span>
                   </Td>
                 </tr>
               ))
             ) : (
               <tr>
-                <Td colSpan={6} style={{ textAlign: 'center', color: '#6b7280' }}>Немає активних заявок</Td>
+                <Td colSpan={6} style={{ textAlign: 'center', color: '#6b7280' }}>{t.common.noData}</Td>
               </tr>
             )}
           </tbody>

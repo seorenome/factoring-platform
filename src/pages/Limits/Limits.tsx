@@ -38,9 +38,9 @@ export const Limits: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case 'active': return <Badge $status="approved">Активний</Badge>;
-      case 'exceeded': return <Badge $status="rejected">Ліміт вичерпано</Badge>;
-      case 'expired': return <Badge $status="pending">Прострочений</Badge>;
+      case 'active': return <Badge $status="approved">{t.limits.active}</Badge>;
+      case 'exceeded': return <Badge $status="rejected">{t.limits.exceeded}</Badge>;
+      case 'expired': return <Badge $status="pending">{t.limits.expired}</Badge>;
       default: return <Badge $status="pending">{status}</Badge>;
     }
   };
@@ -72,12 +72,9 @@ export const Limits: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Ви впевнені, що хочете видалити цей ліміт?')) return;
-    
+    if (!confirm(t.users.deleteConfirm)) return;
     try {
-      await fetch(`http://localhost:3001/api/limits/${id}`, {
-        method: 'DELETE'
-      });
+      await api.deleteLimit(id);
       await loadLimits();
     } catch (error) {
       console.error('Failed to delete limit:', error);
@@ -91,18 +88,14 @@ export const Limits: React.FC = () => {
     }
     
     try {
-      await fetch('http://localhost:3001/api/limits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          supplierId: 999,
-          supplierName: newLimit.supplierName,
-          debtorId: 999,
-          debtorName: newLimit.debtorName,
-          limitAmount: newLimit.limitAmount,
-          usedAmount: 0,
-          availableAmount: newLimit.limitAmount
-        })
+      await api.createLimit({
+        supplierId: 999,
+        supplierName: newLimit.supplierName,
+        debtorId: 999,
+        debtorName: newLimit.debtorName,
+        limitAmount: newLimit.limitAmount,
+        usedAmount: 0,
+        availableAmount: newLimit.limitAmount
       });
       
       setShowModal(false);
@@ -131,9 +124,9 @@ export const Limits: React.FC = () => {
   return (
     <Layout>
       <DashboardHeader>
-        <Title>Управління лімітами</Title>
+        <Title>{t.limits.title}</Title>
         <Button icon={<Plus size={16} />} onClick={() => setShowModal(true)}>
-          Створити ліміт
+          {t.common.createLimit}
         </Button>
       </DashboardHeader>
 
@@ -142,7 +135,7 @@ export const Limits: React.FC = () => {
           <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input 
             type="text" 
-            placeholder="Пошук за постачальником або дебітором..." 
+            placeholder={t.limits.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ 
@@ -154,32 +147,28 @@ export const Limits: React.FC = () => {
             }} 
           />
         </div>
-        <Button variant="outline" icon={<Filter size={16} />}>Фільтри</Button>
+        <Button variant="outline" icon={<Filter size={16} />}>{t.common.filters}</Button>
       </FilterBar>
 
       <TableContainer>
-        <TableHeader>Всі ліміти ({filteredLimits.length})</TableHeader>
+        <TableHeader>{t.limits.title} ({filteredLimits.length})</TableHeader>
         <Table>
           <thead>
             <tr>
-              <Th>Постачальник</Th>
-              <Th>Дебітор</Th>
-              <Th>Ліміт (грн)</Th>
-              <Th>Використано</Th>
-              <Th>Доступно</Th>
-              <Th>Статус</Th>
-              <Th></Th>
+              <Th>{t.limits.supplier}</Th>
+              <Th>{t.limits.debtor}</Th>
+              <Th>{t.limits.limitAmount}</Th>
+              <Th>{t.limits.usedAmount}</Th>
+              <Th>{t.limits.availableAmount}</Th>
+              <Th>{t.limits.status}</Th>
+              <Th>{t.common.actions}</Th>
             </tr>
           </thead>
           <tbody>
             {filteredLimits.map(limit => (
               <tr key={limit.id}>
-                <Td>
-                  <div style={{ fontWeight: 500 }}>{limit.supplierName}</div>
-                </Td>
-                <Td>
-                  <div style={{ fontWeight: 500 }}>{limit.debtorName}</div>
-                </Td>
+                <Td style={{ fontWeight: 500 }}>{limit.supplierName}</Td>
+                <Td style={{ fontWeight: 500 }}>{limit.debtorName}</Td>
                 <Td>
                   {editingId === limit.id ? (
                     <input
@@ -195,26 +184,28 @@ export const Limits: React.FC = () => {
                 <Td>₴ {limit.usedAmount.toLocaleString()}</Td>
                 <Td>₴ {limit.availableAmount.toLocaleString()}</Td>
                 <Td>{getStatusBadge(limit.status)}</Td>
-                <Td style={{ textAlign: 'right' }}>
-                  {editingId === limit.id ? (
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <button onClick={() => handleSave(limit.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10b981' }}>
-                        <Check size={18} />
-                      </button>
-                      <button onClick={() => setEditingId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
-                        <X size={18} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <button onClick={() => handleEdit(limit)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb' }}>
-                        <Edit2 size={18} />
-                      </button>
-                      <button onClick={() => handleDelete(limit.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  )}
+                <Td>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    {editingId === limit.id ? (
+                      <>
+                        <button onClick={() => handleSave(limit.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10b981' }}>
+                          <Check size={18} />
+                        </button>
+                        <button onClick={() => setEditingId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+                          <X size={18} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => handleEdit(limit)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb' }}>
+                          <Edit2 size={18} />
+                        </button>
+                        <button onClick={() => handleDelete(limit.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>
+                          <Trash2 size={18} />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </Td>
               </tr>
             ))}
@@ -243,32 +234,32 @@ export const Limits: React.FC = () => {
             width: '100%',
             maxWidth: '500px'
           }}>
-            <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem', fontWeight: 600 }}>Створити новий ліміт</h3>
+            <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem', fontWeight: 600 }}>{t.limits.createNew}</h3>
             
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Постачальник *</label>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>{t.limits.supplierName}</label>
               <input
                 type="text"
                 value={newLimit.supplierName}
                 onChange={(e) => setNewLimit({ ...newLimit, supplierName: e.target.value })}
-                placeholder="Назва компанії-постачальника"
+                placeholder="ТОВ «Постачальник»"
                 style={{ width: '100%', padding: '0.625rem', border: '1px solid #d1d5db', borderRadius: '0.5rem' }}
               />
             </div>
             
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Дебітор *</label>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>{t.limits.debtorName}</label>
               <input
                 type="text"
                 value={newLimit.debtorName}
                 onChange={(e) => setNewLimit({ ...newLimit, debtorName: e.target.value })}
-                placeholder="Назва компанії-дебітора"
+                placeholder="ТОВ «Дебітор»"
                 style={{ width: '100%', padding: '0.625rem', border: '1px solid #d1d5db', borderRadius: '0.5rem' }}
               />
             </div>
             
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Сума ліміту (грн) *</label>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>{t.limits.limitAmount}</label>
               <input
                 type="number"
                 value={newLimit.limitAmount}
@@ -279,8 +270,8 @@ export const Limits: React.FC = () => {
             </div>
             
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-              <Button variant="outline" onClick={() => setShowModal(false)}>Скасувати</Button>
-              <Button onClick={handleCreate}>Створити</Button>
+              <Button variant="outline" onClick={() => setShowModal(false)}>{t.limits.cancel}</Button>
+              <Button onClick={handleCreate}>{t.common.create}</Button>
             </div>
           </div>
         </div>

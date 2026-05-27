@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useI18n } from '../../i18n/I18nContext';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
@@ -8,6 +9,7 @@ import { Search, Filter, FilePlus, Loader2, ChevronLeft, ChevronRight } from 'lu
 import { api, Request } from '../../services/api';
 
 export const Requests: React.FC = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,11 +56,21 @@ export const Requests: React.FC = () => {
 
   const getStatusText = (status: Request['status']) => {
     switch(status) {
-      case 'pending': return 'На розгляді';
-      case 'approved': return 'Схвалено';
-      case 'rejected': return 'Відхилено';
-      case 'draft': return 'Чернетка';
+      case 'pending': return t.requests.pending;
+      case 'approved': return t.requests.approved;
+      case 'rejected': return t.requests.rejected;
+      case 'draft': return t.requests.draft;
       default: return status;
+    }
+  };
+
+  const getStatusBadge = (status: Request['status']) => {
+    switch(status) {
+      case 'pending': return 'pending';
+      case 'approved': return 'approved';
+      case 'rejected': return 'rejected';
+      case 'draft': return 'draft';
+      default: return 'pending';
     }
   };
 
@@ -86,21 +98,21 @@ export const Requests: React.FC = () => {
   return (
     <Layout>
       <DashboardHeader>
-        <Title>Заявки на факторинг</Title>
+        <Title>{t.requests.title}</Title>
         <Button icon={<FilePlus size={16} />} onClick={() => navigate('/requests/create')}>
-          Створити заявку
+          {t.common.createRequest}
         </Button>
       </DashboardHeader>
 
       <TabsContainer>
         <TabItem $active={activeTab === 'all'} onClick={() => { setActiveTab('all'); setCurrentPage(1); }}>
-          Всі заявки ({requests.length})
+          {t.requests.allRequests} ({requests.length})
         </TabItem>
         <TabItem $active={activeTab === 'pending'} onClick={() => { setActiveTab('pending'); setCurrentPage(1); }}>
-          На розгляді ({requests.filter(r => r.status === 'pending').length})
+          {t.requests.pending} ({requests.filter(r => r.status === 'pending').length})
         </TabItem>
         <TabItem $active={activeTab === 'approved'} onClick={() => { setActiveTab('approved'); setCurrentPage(1); }}>
-          Схвалені ({requests.filter(r => r.status === 'approved').length})
+          {t.requests.approved} ({requests.filter(r => r.status === 'approved').length})
         </TabItem>
       </TabsContainer>
 
@@ -109,7 +121,7 @@ export const Requests: React.FC = () => {
           <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input 
             type="text" 
-            placeholder="Пошук за ID, постачальником або дебітором..." 
+            placeholder={t.requests.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ 
@@ -121,20 +133,20 @@ export const Requests: React.FC = () => {
             }} 
           />
         </div>
-        <Button variant="outline" icon={<Filter size={16} />}>Фільтри</Button>
+        <Button variant="outline" icon={<Filter size={16} />}>{t.common.filters}</Button>
       </FilterBar>
 
       <TableContainer>
-        <TableHeader>Знайдено: {filteredRequests.length}</TableHeader>
+        <TableHeader>{t.requests.found}: {filteredRequests.length}</TableHeader>
         <Table>
           <thead>
             <tr>
-              <Th>ID Заявки</Th>
-              <Th>Дата</Th>
-              <Th>Постачальник</Th>
-              <Th>Дебітор</Th>
-              <Th>Сума</Th>
-              <Th>Статус</Th>
+              <Th>{t.requests.id}</Th>
+              <Th>{t.requests.date}</Th>
+              <Th>{t.requests.supplier}</Th>
+              <Th>{t.requests.debtor}</Th>
+              <Th>{t.requests.amount}</Th>
+              <Th>{t.requests.status}</Th>
             </tr>
           </thead>
           <tbody>
@@ -149,34 +161,34 @@ export const Requests: React.FC = () => {
                 <Td>{req.supplierName}</Td>
                 <Td>{req.debtorName}</Td>
                 <Td>₴ {req.amount.toLocaleString()}</Td>
-                <Td><Badge $status={req.status}>{getStatusText(req.status)}</Badge></Td>
+                <Td><Badge $status={getStatusBadge(req.status)}>{getStatusText(req.status)}</Badge></Td>
               </tr>
             ))}
           </tbody>
         </Table>
-        
-        {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', padding: '1rem 1.5rem', borderTop: '1px solid #e5e5e5' }}>
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              style={{ background: 'none', border: 'none', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: currentPage === 1 ? '#d1d5db' : '#6b7280', display: 'flex', alignItems: 'center' }}
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              Сторінка {currentPage} з {totalPages}
-            </span>
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              style={{ background: 'none', border: 'none', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: currentPage === totalPages ? '#d1d5db' : '#6b7280', display: 'flex', alignItems: 'center' }}
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        )}
       </TableContainer>
+      
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', padding: '1rem 1.5rem', borderTop: '1px solid #e5e5e5' }}>
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            style={{ background: 'none', border: 'none', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: currentPage === 1 ? '#d1d5db' : '#6b7280', display: 'flex', alignItems: 'center' }}
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            {t.requests.page} {currentPage} {t.requests.of} {totalPages}
+          </span>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            style={{ background: 'none', border: 'none', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: currentPage === totalPages ? '#d1d5db' : '#6b7280', display: 'flex', alignItems: 'center' }}
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
     </Layout>
   );
 };

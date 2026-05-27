@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../../i18n/I18nContext';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader } from '../Dashboard/Dashboard.styled';
 import { Badge } from '../Requests/Requests.styled';
@@ -16,6 +17,7 @@ interface Notification {
 }
 
 export const Notifications: React.FC = () => {
+  const { t } = useI18n();
   const { user } = useAuth();
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,30 +41,28 @@ export const Notifications: React.FC = () => {
   const getNotifications = (): Notification[] => {
     const notifs: Notification[] = [];
     
-    // Notifications for new pending requests (for factor)
     if (user?.role === 'factor') {
       const pendingRequests = requests.filter(r => r.status === 'pending');
       pendingRequests.forEach(req => {
         notifs.push({
           id: `req-${req.id}`,
           type: 'request',
-          title: 'Нова заявка на факторинг',
-          message: `Постачальник ${req.supplierName} створив заявку на суму ₴ ${req.amount.toLocaleString()}`,
+          title: t.notifications.newRequest,
+          message: `${t.requests.supplier} ${req.supplierName} ${t.common.createRequest} ${t.requests.amount.toLowerCase()} ₴ ${req.amount.toLocaleString()}`,
           date: new Date(req.createdAt).toLocaleString(),
           read: readIds.has(`req-${req.id}`),
         });
       });
     }
     
-    // Notifications for approved requests (for supplier)
     if (user?.role === 'supplier') {
       const approvedRequests = requests.filter(r => r.status === 'approved');
       approvedRequests.forEach(req => {
         notifs.push({
           id: `approved-${req.id}`,
           type: 'payment',
-          title: 'Заявку схвалено',
-          message: `Вашу заявку ${req.requestNumber} схвалено. Сума фінансування: ₴ ${req.financingAmount.toLocaleString()}`,
+          title: t.notifications.requestApproved,
+          message: `${t.requests.title} ${req.requestNumber} ${t.requests.approved.toLowerCase()}. ${t.dashboard.totalFinanced}: ₴ ${req.financingAmount.toLocaleString()}`,
           date: new Date(req.createdAt).toLocaleString(),
           read: readIds.has(`approved-${req.id}`),
         });
@@ -108,25 +108,25 @@ export const Notifications: React.FC = () => {
       <DashboardHeader>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <Bell size={28} />
-          <Title>Повідомлення</Title>
-          {unreadCount > 0 && <Badge $status="pending">{unreadCount} непрочитаних</Badge>}
+          <Title>{t.notifications.title}</Title>
+          {unreadCount > 0 && <Badge $status="pending">{unreadCount} {t.notifications.unread}</Badge>}
         </div>
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
             style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}
           >
-            Позначити всі як прочитані
+            {t.notifications.markAllRead}
           </button>
         )}
       </DashboardHeader>
 
       <TableContainer>
-        <TableHeader>Історія повідомлень</TableHeader>
+        <TableHeader>{t.notifications.title}</TableHeader>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {notifications.length === 0 ? (
             <div style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>
-              Немає повідомлень
+              {t.notifications.noNotifications}
             </div>
           ) : (
             notifications.map(notif => (

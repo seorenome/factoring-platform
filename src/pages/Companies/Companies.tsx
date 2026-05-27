@@ -30,19 +30,19 @@ export const Companies: React.FC = () => {
 
   const getStatusBadge = (status: Company['kycStatus']) => {
     switch(status) {
-      case 'approved': return <Badge $status="approved">KYC Пройдено</Badge>;
-      case 'pending': return <Badge $status="pending">На перевірці</Badge>;
-      case 'rejected': return <Badge $status="rejected">Відхилено</Badge>;
+      case 'approved': return <Badge $status="approved">{t.companies.kycApproved}</Badge>;
+      case 'pending': return <Badge $status="pending">{t.companies.kycPending}</Badge>;
+      case 'rejected': return <Badge $status="rejected">{t.companies.kycRejected}</Badge>;
       default: return <Badge $status="pending">{status}</Badge>;
     }
   };
 
   const getRoleLabel = (name: string, edrpou: string) => {
-    if (edrpou === '87654321') return 'Дебітор';
-    if (edrpou === '12345678') return 'Постачальник';
-    if (edrpou === '55555555') return 'Дебітор';
-    if (edrpou === '32165498') return 'Постачальник';
-    return 'Учасник';
+    if (edrpou === '87654321') return t.roles.debtor;
+    if (edrpou === '12345678') return t.roles.supplier;
+    if (edrpou === '55555555') return t.roles.debtor;
+    if (edrpou === '32165498') return t.roles.supplier;
+    return t.companies.role;
   };
 
   const filteredCompanies = companies.filter(company =>
@@ -63,8 +63,8 @@ export const Companies: React.FC = () => {
   return (
     <Layout>
       <DashboardHeader>
-        <Title>{t.common.companies}</Title>
-        <Button icon={<Plus size={16} />}>Додати компанію</Button>
+        <Title>{t.companies.title}</Title>
+        <Button icon={<Plus size={16} />}>{t.common.addCompany}</Button>
       </DashboardHeader>
 
       <FilterBar>
@@ -72,7 +72,7 @@ export const Companies: React.FC = () => {
           <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input 
             type="text" 
-            placeholder="Пошук за назвою або ЄДРПОУ..." 
+            placeholder={t.companies.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ 
@@ -84,19 +84,19 @@ export const Companies: React.FC = () => {
             }} 
           />
         </div>
-        <Button variant="outline" icon={<Filter size={16} />}>Фільтри</Button>
+        <Button variant="outline" icon={<Filter size={16} />}>{t.common.filters}</Button>
       </FilterBar>
 
       <TableContainer>
-        <TableHeader>Всі компанії ({filteredCompanies.length})</TableHeader>
+        <TableHeader>{t.companies.title} ({filteredCompanies.length})</TableHeader>
         <Table>
           <thead>
             <tr>
-              <Th>Назва</Th>
-              <Th>ЄДРПОУ</Th>
-              <Th>Роль</Th>
-              <Th>KYC / AML Статус</Th>
-              <Th>Дата реєстрації</Th>
+              <Th>{t.companies.name}</Th>
+              <Th>{t.companies.edrpou}</Th>
+              <Th>{t.companies.role}</Th>
+              <Th>{t.companies.kycStatus}</Th>
+              <Th>{t.companies.registrationDate}</Th>
             </tr>
           </thead>
           <tbody>

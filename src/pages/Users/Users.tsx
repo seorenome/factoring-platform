@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../../i18n/I18nContext';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
@@ -7,6 +8,7 @@ import { Search, Filter, UserPlus, Trash2, Loader2 } from 'lucide-react';
 import { api, User } from '../../services/api';
 
 export const Users: React.FC = () => {
+  const { t } = useI18n();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,7 +29,7 @@ export const Users: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Ви впевнені, що хочете видалити цього користувача?')) return;
+    if (!confirm(t.users.deleteConfirm)) return;
     try {
       await api.deleteUser(id);
       await loadUsers();
@@ -38,10 +40,10 @@ export const Users: React.FC = () => {
 
   const getRoleBadge = (role: User['role']) => {
     switch(role) {
-      case 'factor': return <Badge $status="approved">Фактор</Badge>;
-      case 'supplier': return <Badge $status="pending">Постачальник</Badge>;
-      case 'debtor': return <Badge $status="approved">Дебітор</Badge>;
-      case 'admin': return <Badge $status="approved">Адміністратор</Badge>;
+      case 'factor': return <Badge $status="approved">{t.roles.factor}</Badge>;
+      case 'supplier': return <Badge $status="pending">{t.roles.supplier}</Badge>;
+      case 'debtor': return <Badge $status="approved">{t.roles.debtor}</Badge>;
+      case 'admin': return <Badge $status="approved">{t.roles.admin}</Badge>;
       default: return <Badge $status="pending">{role}</Badge>;
     }
   };
@@ -64,8 +66,8 @@ export const Users: React.FC = () => {
   return (
     <Layout>
       <DashboardHeader>
-        <Title>Користувачі</Title>
-        <Button icon={<UserPlus size={16} />}>Запросити користувача</Button>
+        <Title>{t.users.title}</Title>
+        <Button icon={<UserPlus size={16} />}>{t.common.inviteUser}</Button>
       </DashboardHeader>
 
       <FilterBar>
@@ -73,7 +75,7 @@ export const Users: React.FC = () => {
           <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input 
             type="text" 
-            placeholder="Пошук за іменем або email..." 
+            placeholder={t.users.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ 
@@ -85,19 +87,19 @@ export const Users: React.FC = () => {
             }} 
           />
         </div>
-        <Button variant="outline" icon={<Filter size={16} />}>Фільтри</Button>
+        <Button variant="outline" icon={<Filter size={16} />}>{t.common.filters}</Button>
       </FilterBar>
 
       <TableContainer>
-        <TableHeader>Всі користувачі ({filteredUsers.length})</TableHeader>
+        <TableHeader>{t.users.title} ({filteredUsers.length})</TableHeader>
         <Table>
           <thead>
             <tr>
-              <Th>Ім'я</Th>
-              <Th>Email</Th>
-              <Th>Роль</Th>
-              <Th>Дата реєстрації</Th>
-              <Th></Th>
+              <Th>{t.users.name}</Th>
+              <Th>{t.users.email}</Th>
+              <Th>{t.users.role}</Th>
+              <Th>{t.users.registrationDate}</Th>
+              <Th>{t.common.actions}</Th>
             </tr>
           </thead>
           <tbody>
@@ -107,7 +109,7 @@ export const Users: React.FC = () => {
                 <Td>{user.email}</Td>
                 <Td>{getRoleBadge(user.role)}</Td>
                 <Td>{new Date(user.createdAt).toLocaleDateString()}</Td>
-                <Td style={{ textAlign: 'right' }}>
+                <Td>
                   <button onClick={() => handleDelete(user.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>
                     <Trash2 size={18} />
                   </button>

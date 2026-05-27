@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useI18n } from '../../i18n/I18nContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, Request } from '../../services/api';
 import { Layout } from '../../components/Layout/Layout';
@@ -14,6 +15,7 @@ import { Badge } from '../Requests/Requests.styled';
 import { Check, ArrowLeft, FileText, Download, Loader2 } from 'lucide-react';
 
 export const RequestDetails: React.FC = () => {
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -41,35 +43,26 @@ export const RequestDetails: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case 'pending': return <Badge $status="pending">На розгляді</Badge>;
-      case 'approved': return <Badge $status="approved">Схвалено</Badge>;
-      case 'rejected': return <Badge $status="rejected">Відхилено</Badge>;
+      case 'pending': return <Badge $status="pending">{t.requests.pending}</Badge>;
+      case 'approved': return <Badge $status="approved">{t.requests.approved}</Badge>;
+      case 'rejected': return <Badge $status="rejected">{t.requests.rejected}</Badge>;
       default: return <Badge $status="draft">{status}</Badge>;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch(status) {
-      case 'pending': return 'На розгляді';
-      case 'approved': return 'Схвалено';
-      case 'rejected': return 'Відхилено';
-      default: return status;
     }
   };
 
   const getFactoringTypeText = (type: string) => {
     switch(type) {
-      case 'classical': return 'Класичний';
-      case 'reverse': return 'Реверсивний';
-      case 'closed': return 'Закритий';
+      case 'classical': return t.createRequest.classical;
+      case 'reverse': return t.createRequest.reverse;
+      case 'closed': return t.createRequest.closed;
       default: return type;
     }
   };
 
   const getRecourseTypeText = (type: string) => {
     switch(type) {
-      case 'recourse': return 'З регресом';
-      case 'non-recourse': return 'Без регресу';
+      case 'recourse': return t.createRequest.recourse;
+      case 'non-recourse': return t.createRequest.nonRecourse;
       default: return type;
     }
   };
@@ -98,8 +91,8 @@ export const RequestDetails: React.FC = () => {
     return (
       <Layout>
         <div style={{ textAlign: 'center', padding: '3rem' }}>
-          <p>Заявку не знайдено</p>
-          <Button onClick={() => navigate('/requests')}>Повернутися</Button>
+          <p>{t.common.noData}</p>
+          <Button onClick={() => navigate('/requests')}>{t.common.back}</Button>
         </div>
       </Layout>
     );
@@ -115,19 +108,19 @@ export const RequestDetails: React.FC = () => {
           onClick={() => navigate('/requests')}
           style={{ background: 'none', border: 'none', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}
         >
-          <ArrowLeft size={16} /> Повернутися до списку
+          <ArrowLeft size={16} /> {t.common.back}
         </button>
       </div>
 
       <DashboardHeader>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <Title>Заявка {request.requestNumber}</Title>
+          <Title>{t.requests.details} {request.requestNumber}</Title>
           {getStatusBadge(request.status)}
         </div>
         {user?.role === 'factor' && request.status === 'pending' && (
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <Button variant="secondary">Відхилити</Button>
-            <Button onClick={handleApprove}>Схвалити фінансування</Button>
+            <Button variant="secondary">{t.common.reject}</Button>
+            <Button onClick={handleApprove}>{t.common.approve}</Button>
           </div>
         )}
       </DashboardHeader>
@@ -135,55 +128,55 @@ export const RequestDetails: React.FC = () => {
       <DetailsContainer>
         <MainPanel>
           <SectionCard>
-            <SectionTitle>Інформація про заявку</SectionTitle>
+            <SectionTitle>{t.requests.details}</SectionTitle>
             <DataGrid>
               <DataItem>
-                <DataLabel>Постачальник</DataLabel>
+                <DataLabel>{t.requests.supplier}</DataLabel>
                 <DataValue>{request.supplierName}</DataValue>
               </DataItem>
               <DataItem>
-                <DataLabel>Дебітор</DataLabel>
-                <DataValue>{request.debtorName} (ЄДРПОУ: {request.debtorEdrpou})</DataValue>
+                <DataLabel>{t.requests.debtor}</DataLabel>
+                <DataValue>{request.debtorName} ({t.companies.edrpou}: {request.debtorEdrpou})</DataValue>
               </DataItem>
               <DataItem>
-                <DataLabel>Сума інвойсів</DataLabel>
+                <DataLabel>{t.dashboard.totalFinanced}</DataLabel>
                 <DataValue>₴ {request.amount.toLocaleString()}</DataValue>
               </DataItem>
               <DataItem>
-                <DataLabel>Сума фінансування</DataLabel>
+                <DataLabel>{t.requests.financingPercent}</DataLabel>
                 <DataValue>₴ {request.financingAmount.toLocaleString()}</DataValue>
               </DataItem>
               <DataItem>
-                <DataLabel>Тип факторингу</DataLabel>
+                <DataLabel>{t.requests.factoringType}</DataLabel>
                 <DataValue>{getFactoringTypeText(request.factoringType)}</DataValue>
               </DataItem>
               <DataItem>
-                <DataLabel>Регрес</DataLabel>
+                <DataLabel>{t.requests.recourseType}</DataLabel>
                 <DataValue>{getRecourseTypeText(request.recourseType)}</DataValue>
               </DataItem>
               <DataItem>
-                <DataLabel>Дата платежу</DataLabel>
-                <DataValue>{request.paymentDate || 'Не вказано'}</DataValue>
+                <DataLabel>{t.requests.paymentDate}</DataLabel>
+                <DataValue>{request.paymentDate || t.common.noData}</DataValue>
               </DataItem>
               <DataItem>
-                <DataLabel>Дата створення</DataLabel>
+                <DataLabel>{t.requests.createdAt}</DataLabel>
                 <DataValue>{new Date(request.createdAt).toLocaleString()}</DataValue>
               </DataItem>
             </DataGrid>
           </SectionCard>
 
           <SectionCard>
-            <SectionTitle>Документи</SectionTitle>
+            <SectionTitle>{t.requests.documents}</SectionTitle>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid #e5e5e5', borderRadius: '0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <FileText color="#6b7280" />
                   <div>
                     <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>Рахунок-фактура №{request.requestNumber}.pdf</div>
-                    <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>Завантажено: {new Date(request.createdAt).toLocaleDateString()} • 2.4 MB</div>
+                    <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>{t.common.loading} {new Date(request.createdAt).toLocaleDateString()}</div>
                   </div>
                 </div>
-                <Button variant="outline" icon={<Download size={16} />}>Завантажити</Button>
+                <Button variant="outline" icon={<Download size={16} />}>{t.common.download}</Button>
               </div>
             </div>
           </SectionCard>
@@ -192,43 +185,43 @@ export const RequestDetails: React.FC = () => {
         <SidebarPanel>
           {user?.role === 'factor' && request.status === 'pending' && (
             <SectionCard>
-              <SectionTitle>Рішення та умови (Фактор)</SectionTitle>
+              <SectionTitle>{t.requests.decision}</SectionTitle>
               
               <InputGroup>
-                <Label>Відсоток фінансування (%)</Label>
+                <Label>{t.requests.financingPercent}</Label>
                 <Input type="number" value={financingPercent} onChange={(e) => setFinancingPercent(Number(e.target.value))} />
               </InputGroup>
               
               <InputGroup>
-                <Label>Ставка / Дисконт (% річних)</Label>
+                <Label>{t.requests.discountRate}</Label>
                 <Input type="number" value={interestRate} onChange={(e) => setInterestRate(Number(e.target.value))} />
               </InputGroup>
               
               <InputGroup>
-                <Label>Комісія фактора (%)</Label>
+                <Label>{t.requests.commission}</Label>
                 <Input type="number" value={commissionRate} onChange={(e) => setCommissionRate(Number(e.target.value))} />
               </InputGroup>
               
               <InputGroup>
-                <Label>Сума до виплати постачальнику</Label>
+                <Label>{t.requests.payoutAmount}</Label>
                 <Input type="text" value={`₴ ${(financingAmount - commissionAmount).toLocaleString()}`} readOnly style={{ backgroundColor: '#f9fafb' }} />
               </InputGroup>
 
               <ButtonGroup>
-                <Button style={{ width: '100%' }} onClick={handleApprove}>Схвалити</Button>
+                <Button style={{ width: '100%' }} onClick={handleApprove}>{t.common.approve}</Button>
               </ButtonGroup>
             </SectionCard>
           )}
 
           <SectionCard>
-            <SectionTitle>Статус процесу</SectionTitle>
+            <SectionTitle>{t.requests.processStatus}</SectionTitle>
             <Timeline>
               <TimelineItem $active>
                 <TimelineDot $completed>
                   <Check size={14} color="white" />
                 </TimelineDot>
                 <TimelineContent>
-                  <DataValue>Заявка створена</DataValue>
+                  <DataValue>{t.requests.createdAt}</DataValue>
                   <DataLabel style={{ display: 'block' }}>{new Date(request.createdAt).toLocaleString()}</DataLabel>
                 </TimelineContent>
               </TimelineItem>
@@ -239,10 +232,10 @@ export const RequestDetails: React.FC = () => {
                 </TimelineDot>
                 <TimelineContent>
                   <DataValue style={{ color: request.status === 'approved' ? '#111827' : '#9ca3af' }}>
-                    {request.status === 'approved' ? 'Схвалено' : 'Рішення фактора'}
+                    {request.status === 'approved' ? t.requests.approved : t.requests.decision}
                   </DataValue>
                   {request.status === 'pending' && (
-                    <DataLabel style={{ display: 'block' }}>Очікує на розгляд</DataLabel>
+                    <DataLabel style={{ display: 'block' }}>{t.dashboard.pendingReview}</DataLabel>
                   )}
                 </TimelineContent>
               </TimelineItem>
@@ -250,14 +243,14 @@ export const RequestDetails: React.FC = () => {
               <TimelineItem>
                 <TimelineDot />
                 <TimelineContent>
-                  <DataValue style={{ color: '#9ca3af' }}>Підписання документів (КЕП)</DataValue>
+                  <DataValue style={{ color: '#9ca3af' }}>{t.common.sign}</DataValue>
                 </TimelineContent>
               </TimelineItem>
               
               <TimelineItem>
                 <TimelineDot />
                 <TimelineContent>
-                  <DataValue style={{ color: '#9ca3af' }}>Виплата фінансування</DataValue>
+                  <DataValue style={{ color: '#9ca3af' }}>{t.dashboard.totalFinanced}</DataValue>
                 </TimelineContent>
               </TimelineItem>
             </Timeline>

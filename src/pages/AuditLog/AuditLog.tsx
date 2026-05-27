@@ -52,6 +52,18 @@ export const AuditLog: React.FC = () => {
     }
   };
 
+  const getActionLabel = (action: string) => {
+    return t.audit.actions[action as keyof typeof t.audit.actions] || action;
+  };
+
+  const getEntityTypeLabel = (type: string) => {
+    return t.audit.entityTypes[type as keyof typeof t.audit.entityTypes] || type;
+  };
+
+  const getRoleLabel = (role: string) => {
+    return t.roles[role as keyof typeof t.roles] || role;
+  };
+
   const filteredAudit = audit.filter(entry =>
     entry.userName.toLowerCase().includes(search.toLowerCase()) ||
     entry.entityName.toLowerCase().includes(search.toLowerCase()) ||
@@ -59,10 +71,10 @@ export const AuditLog: React.FC = () => {
   );
 
   const exportToCSV = () => {
-    const headers = ['ID', 'Час', 'Користувач', 'Роль', 'Дія', 'Тип', 'Об\'єкт', 'Деталі', 'IP'];
+    const headers = ['ID', t.audit.columns.time, t.audit.columns.user, t.audit.columns.type, t.audit.columns.action, t.audit.columns.object, t.audit.columns.details, t.audit.columns.ip];
     const rows = filteredAudit.map(entry => [
       entry.id, entry.createdAt, entry.userName, entry.userRole, entry.action,
-      entry.entityType, entry.entityName, entry.details, entry.ipAddress
+      entry.entityName, entry.details, entry.ipAddress
     ]);
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -87,9 +99,9 @@ export const AuditLog: React.FC = () => {
   return (
     <Layout>
       <DashboardHeader>
-        <Title>Журнал аудиту</Title>
+        <Title>{t.audit.title}</Title>
         <Button variant="outline" icon={<Download size={16} />} onClick={exportToCSV}>
-          Експортувати CSV
+          {t.audit.export}
         </Button>
       </DashboardHeader>
 
@@ -98,7 +110,7 @@ export const AuditLog: React.FC = () => {
           <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
-            placeholder="Пошук за користувачем, об'єктом або дією..."
+            placeholder={t.audit.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
@@ -110,21 +122,21 @@ export const AuditLog: React.FC = () => {
             }}
           />
         </div>
-        <Button variant="outline" icon={<Filter size={16} />}>Фільтри</Button>
+        <Button variant="outline" icon={<Filter size={16} />}>{t.common.filters}</Button>
       </FilterBar>
 
       <TableContainer>
-        <TableHeader>Всього записів: {filteredAudit.length}</TableHeader>
+        <TableHeader>{t.audit.totalRecords}: {filteredAudit.length}</TableHeader>
         <Table>
           <thead>
             <tr>
-              <Th>Час</Th>
-              <Th>Користувач</Th>
-              <Th>Дія</Th>
-              <Th>Тип</Th>
-              <Th>Об'єкт</Th>
-              <Th>Деталі</Th>
-              <Th>IP</Th>
+              <Th>{t.audit.columns.time}</Th>
+              <Th>{t.audit.columns.user}</Th>
+              <Th>{t.audit.columns.action}</Th>
+              <Th>{t.audit.columns.type}</Th>
+              <Th>{t.audit.columns.object}</Th>
+              <Th>{t.audit.columns.details}</Th>
+              <Th>{t.audit.columns.ip}</Th>
             </tr>
           </thead>
           <tbody>
@@ -133,18 +145,18 @@ export const AuditLog: React.FC = () => {
                 <Td style={{ fontSize: '0.75rem', color: '#6b7280' }}>{new Date(entry.createdAt).toLocaleString()}</Td>
                 <Td>
                   <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{entry.userName}</div>
-                  <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>{entry.userRole}</div>
+                  <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>{getRoleLabel(entry.userRole)}</div>
                 </Td>
                 <Td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {getActionIcon(entry.action)}
-                    <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>{entry.action}</span>
+                    <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>{getActionLabel(entry.action)}</span>
                   </div>
                 </Td>
                 <Td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {getEntityIcon(entry.entityType)}
-                    <span style={{ fontSize: '0.875rem' }}>{entry.entityType}</span>
+                    <span style={{ fontSize: '0.875rem' }}>{getEntityTypeLabel(entry.entityType)}</span>
                   </div>
                 </Td>
                 <Td>

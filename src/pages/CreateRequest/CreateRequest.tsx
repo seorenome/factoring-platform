@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useI18n } from '../../i18n/I18nContext';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
@@ -90,29 +91,26 @@ const MOCK_DOCUMENTS: MockDoc[] = [
 ];
 
 export const CreateRequest: React.FC = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Step 1: Document selection states
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
   const [docAmounts, setDocAmounts] = useState<Record<string, number>>({});
   const [partialUse, setPartialUse] = useState<Record<string, boolean>>({});
 
-  // Step 2: Debtor states
   const [debtorName, setDebtorName] = useState('');
   const [debtorEdrpou, setDebtorEdrpou] = useState('');
   const [paymentDate, setPaymentDate] = useState('');
 
-  // Step 3: Financing & Calculator parameters
   const [factoringType, setFactoringType] = useState<'classical' | 'reverse' | 'closed'>('classical');
   const [recourseType, setRecourseType] = useState<'recourse' | 'non-recourse'>('recourse');
   const [financingPercent, setFinancingPercent] = useState(80);
   const [interestRate, setInterestRate] = useState(18);
   const [commissionRate, setCommissionRate] = useState(1.5);
 
-  // Populate debtor information automatically when documents are chosen
   useEffect(() => {
     if (selectedDocIds.length > 0) {
       const firstSelectedDoc = MOCK_DOCUMENTS.find(doc => doc.id === selectedDocIds[0]);
@@ -172,7 +170,7 @@ export const CreateRequest: React.FC = () => {
     const firstDoc = MOCK_DOCUMENTS.find(doc => doc.id === selectedDocIds[0]);
     const supplierId = user.id;
     const supplierName = firstDoc?.supplier || 'Невідомий постачальник';
-    const debtorId = 1; // Тимчасово hardcode
+    const debtorId = 1;
     const requestNumber = generateRequestNumber();
 
     const requestData = {
@@ -187,7 +185,7 @@ export const CreateRequest: React.FC = () => {
       factoringType,
       recourseType,
       paymentDate,
-      status: 'pending'
+      status: 'pending' as const
     };
 
     try {
@@ -201,17 +199,14 @@ export const CreateRequest: React.FC = () => {
     }
   };
 
-  // Add createRequest to api service
-  // Note: This method already exists in api.ts
-
   const getTypeNameCapital = (type: string) => {
-    if (type === 'classical') return 'Класичний';
-    if (type === 'reverse') return 'Реверсивний';
-    return 'Закритий';
+    if (type === 'classical') return t.createRequest.classical;
+    if (type === 'reverse') return t.createRequest.reverse;
+    return t.createRequest.closed;
   };
 
   const getSubtypeNameCapital = (type: string) => {
-    return type === 'recourse' ? 'З регресом' : 'Без регресу';
+    return type === 'recourse' ? t.createRequest.recourse : t.createRequest.nonRecourse;
   };
 
   return (
@@ -231,12 +226,12 @@ export const CreateRequest: React.FC = () => {
             fontWeight: 500
           }}
         >
-          <ArrowLeft size={16} /> Повернутися до заявок
+          <ArrowLeft size={16} /> {t.createRequest.back}
         </button>
       </div>
 
       <DashboardHeader style={{ marginBottom: '2rem' }}>
-        <Title>Створення нової заявки</Title>
+        <Title>{t.createRequest.title}</Title>
       </DashboardHeader>
 
       <FormContainer>
@@ -244,19 +239,19 @@ export const CreateRequest: React.FC = () => {
           <StepsProgress>
             <StepIndicator $active={currentStep === 1} $completed={currentStep > 1}>
               <StepDot $active={currentStep === 1} $completed={currentStep > 1}>1</StepDot>
-              <StepLabel $active={currentStep === 1}>Документи</StepLabel>
+              <StepLabel $active={currentStep === 1}>{t.createRequest.step1Title.split(':')[0]}</StepLabel>
             </StepIndicator>
             <StepIndicator $active={currentStep === 2} $completed={currentStep > 2}>
               <StepDot $active={currentStep === 2} $completed={currentStep > 2}>2</StepDot>
-              <StepLabel $active={currentStep === 2}>Дебітор</StepLabel>
+              <StepLabel $active={currentStep === 2}>{t.createRequest.step2Title.split(':')[0]}</StepLabel>
             </StepIndicator>
             <StepIndicator $active={currentStep === 3} $completed={currentStep > 3}>
               <StepDot $active={currentStep === 3} $completed={currentStep > 3}>3</StepDot>
-              <StepLabel $active={currentStep === 3}>Калькулятор</StepLabel>
+              <StepLabel $active={currentStep === 3}>{t.createRequest.step3Title.split(':')[0]}</StepLabel>
             </StepIndicator>
             <StepIndicator $active={currentStep === 4} $completed={currentStep > 4}>
               <StepDot $active={currentStep === 4} $completed={currentStep > 4}>4</StepDot>
-              <StepLabel $active={currentStep === 4}>Підтвердження</StepLabel>
+              <StepLabel $active={currentStep === 4}>{t.createRequest.step4Title.split(':')[0]}</StepLabel>
             </StepIndicator>
           </StepsProgress>
         </FormHeader>
@@ -264,9 +259,9 @@ export const CreateRequest: React.FC = () => {
         <FormBody>
           {currentStep === 1 && (
             <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>Крок 1: Виберіть документи для факторингу</h3>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>{t.createRequest.step1Title}</h3>
               <p style={{ color: '#4b5563', fontSize: '0.875rem', margin: '0 0 1.5rem 0' }}>
-                Позначте акти або рахунки, які ви бажаєте профінансувати. Можна використати суму документа повністю або вказати часткове використання.
+                {t.createRequest.step1Desc}
               </p>
 
               <DocumentGrid>
@@ -291,7 +286,7 @@ export const CreateRequest: React.FC = () => {
                           <div>
                             <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: '#111827' }}>{doc.name}</div>
                             <div style={{ fontSize: '0.8125rem', color: '#6b7280', marginTop: '0.125rem' }}>
-                              Постачальник: {doc.supplier} • Дебітор: {doc.debtor}
+                              {t.requests.supplier}: {doc.supplier} • {t.requests.debtor}: {doc.debtor}
                             </div>
                           </div>
                         </div>
@@ -299,7 +294,7 @@ export const CreateRequest: React.FC = () => {
                           <div style={{ fontWeight: 700, fontSize: '1rem', color: '#111827' }}>
                             ₴ {doc.amount.toLocaleString()}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.125rem' }}>Повна сума</div>
+                          <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.125rem' }}>{t.createRequest.totalInvoices}</div>
                         </div>
                       </div>
 
@@ -322,12 +317,12 @@ export const CreateRequest: React.FC = () => {
                               checked={isPartial}
                               onChange={(e) => handlePartialCheck(doc.id, e.target.checked, doc.amount)}
                             />
-                            Часткове використання
+                            {t.createRequest.partialUse}
                           </label>
 
                           {isPartial && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <span style={{ fontSize: '0.8125rem', color: '#6b7280' }}>Сума використання:</span>
+                              <span style={{ fontSize: '0.8125rem', color: '#6b7280' }}>{t.createRequest.usageAmount}:</span>
                               <input
                                 type="number"
                                 value={docAmounts[doc.id] || 0}
@@ -355,13 +350,13 @@ export const CreateRequest: React.FC = () => {
 
           {currentStep === 2 && (
             <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>Крок 2: Інформація про дебітора та платіж</h3>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>{t.createRequest.step2Title}</h3>
               <p style={{ color: '#4b5563', fontSize: '0.875rem', margin: '0 0 1.5rem 0' }}>
-                Реквізити автоматично аналізуються на основі завантаженого пакету документів. Деталі можна за потреби змінити.
+                {t.createRequest.step2Desc}
               </p>
 
               <FormGroup>
-                <FormLabel>Назва компанії-дебітора</FormLabel>
+                <FormLabel>{t.createRequest.debtorNameLabel}</FormLabel>
                 <FormInput
                   type="text"
                   value={debtorName}
@@ -372,7 +367,7 @@ export const CreateRequest: React.FC = () => {
 
               <TwoColGrid>
                 <FormGroup>
-                  <FormLabel>Код ЄДРПОУ дебітора</FormLabel>
+                  <FormLabel>{t.createRequest.debtorEdrpouLabel}</FormLabel>
                   <FormInput
                     type="text"
                     value={debtorEdrpou}
@@ -382,7 +377,7 @@ export const CreateRequest: React.FC = () => {
                 </FormGroup>
 
                 <FormGroup>
-                  <FormLabel>Дата платежу за договором</FormLabel>
+                  <FormLabel>{t.createRequest.paymentDateLabel}</FormLabel>
                   <FormInput
                     type="date"
                     value={paymentDate}
@@ -395,57 +390,57 @@ export const CreateRequest: React.FC = () => {
 
           {currentStep === 3 && (
             <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>Крок 3: Вибір типу та Калькулятор фінансування</h3>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>{t.createRequest.step3Title}</h3>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <FormLabel style={{ display: 'block', marginBottom: '0.75rem' }}>Тип факторингу</FormLabel>
+                <FormLabel style={{ display: 'block', marginBottom: '0.75rem' }}>{t.createRequest.factoringTypeLabel}</FormLabel>
                 <ChoiceGrid style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                   <FactoringTypeCard
                     $selected={factoringType === 'classical'}
                     onClick={() => setFactoringType('classical')}
                   >
-                    <FactoringTypeTitle>Класичний</FactoringTypeTitle>
-                    <FactoringTypeDesc>Фінансування постачальника під заставу відступлених грошових вимог до дебітора.</FactoringTypeDesc>
+                    <FactoringTypeTitle>{t.createRequest.classical}</FactoringTypeTitle>
+                    <FactoringTypeDesc>{t.createRequest.classical}</FactoringTypeDesc>
                   </FactoringTypeCard>
                   <FactoringTypeCard
                     $selected={factoringType === 'reverse'}
                     onClick={() => setFactoringType('reverse')}
                   >
-                    <FactoringTypeTitle>Реверсивний</FactoringTypeTitle>
-                    <FactoringTypeDesc>Ініціюється дебітором для забезпечення відстрочки з оплати рахунків постачальникам.</FactoringTypeDesc>
+                    <FactoringTypeTitle>{t.createRequest.reverse}</FactoringTypeTitle>
+                    <FactoringTypeDesc>{t.createRequest.reverse}</FactoringTypeDesc>
                   </FactoringTypeCard>
                   <FactoringTypeCard
                     $selected={factoringType === 'closed'}
                     onClick={() => setFactoringType('closed')}
                   >
-                    <FactoringTypeTitle>Закритий</FactoringTypeTitle>
-                    <FactoringTypeDesc>Дебітор не повідомляється про наявність договору відступлення права вимоги.</FactoringTypeDesc>
+                    <FactoringTypeTitle>{t.createRequest.closed}</FactoringTypeTitle>
+                    <FactoringTypeDesc>{t.createRequest.closed}</FactoringTypeDesc>
                   </FactoringTypeCard>
                 </ChoiceGrid>
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <FormLabel style={{ display: 'block', marginBottom: '0.75rem' }}>Вибір підтипу</FormLabel>
+                <FormLabel style={{ display: 'block', marginBottom: '0.75rem' }}>{t.createRequest.recourseTypeLabel}</FormLabel>
                 <ChoiceGrid>
                   <ChoiceButton
                     $selected={recourseType === 'recourse'}
                     onClick={() => setRecourseType('recourse')}
                   >
-                    З регресом (Зобов'язання повернення при несплаті)
+                    {t.createRequest.recourse}
                   </ChoiceButton>
                   <ChoiceButton
                     $selected={recourseType === 'non-recourse'}
                     onClick={() => setRecourseType('non-recourse')}
                   >
-                    Без регресу (Фактор бере кредитний ризик)
+                    {t.createRequest.nonRecourse}
                   </ChoiceButton>
                 </ChoiceGrid>
               </div>
 
-              <h4 style={{ fontSize: '1.05rem', fontWeight: 600, margin: '2rem 0 1rem 0', color: '#111827' }}>Калькулятор умов</h4>
+              <h4 style={{ fontSize: '1.05rem', fontWeight: 600, margin: '2rem 0 1rem 0', color: '#111827' }}>{t.createRequest.calculator}</h4>
               <TwoColGrid>
                 <FormGroup>
-                  <FormLabel>Відсоток першого траншу (%)</FormLabel>
+                  <FormLabel>{t.createRequest.financingPercentLabel}</FormLabel>
                   <FormInput
                     type="number"
                     value={financingPercent}
@@ -456,7 +451,7 @@ export const CreateRequest: React.FC = () => {
                 </FormGroup>
 
                 <FormGroup>
-                  <FormLabel>Ставка дисконту (% річних)</FormLabel>
+                  <FormLabel>{t.createRequest.interestRateLabel}</FormLabel>
                   <FormInput
                     type="number"
                     value={interestRate}
@@ -466,7 +461,7 @@ export const CreateRequest: React.FC = () => {
               </TwoColGrid>
 
               <FormGroup>
-                <FormLabel>Збір фактора / Комісія (%)</FormLabel>
+                <FormLabel>{t.createRequest.commissionRateLabel}</FormLabel>
                 <FormInput
                   type="number"
                   value={commissionRate}
@@ -478,26 +473,26 @@ export const CreateRequest: React.FC = () => {
               <CalcCard>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                   <TrendingUp size={18} color="#2563eb" />
-                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#2563eb' }}>Онлайн-калькулятор</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#2563eb' }}>{t.createRequest.calculator}</span>
                 </div>
                 <CalcRow>
-                  <span>Загальна сума інвойсів:</span>
+                  <span>{t.createRequest.totalInvoices}:</span>
                   <span style={{ fontWeight: 600 }}>₴ {totalAmount.toLocaleString()}</span>
                 </CalcRow>
                 <CalcRow>
-                  <span>Доступне фінансування ({financingPercent}%):</span>
+                  <span>{t.createRequest.availableFinancing} ({financingPercent}%):</span>
                   <span style={{ fontWeight: 600 }}>₴ {financingAmount.toLocaleString()}</span>
                 </CalcRow>
                 <CalcRow>
-                  <span>Комісія за адміністрування ({commissionRate}%):</span>
+                  <span>{t.createRequest.administrationFee} ({commissionRate}%):</span>
                   <span>₴ {commissionAmount.toLocaleString()}</span>
                 </CalcRow>
                 <CalcRow>
-                  <span>Орієнтовні відсотки на місяць ({interestRate}% річних):</span>
+                  <span>{t.createRequest.monthlyInterest} ({interestRate}%):</span>
                   <span>₴ {Math.round(monthInterest).toLocaleString()}</span>
                 </CalcRow>
                 <CalcRow $bold>
-                  <span>Сума виплати першого траншу:</span>
+                  <span>{t.createRequest.firstTranche}:</span>
                   <span>₴ {(financingAmount - commissionAmount).toLocaleString()}</span>
                 </CalcRow>
               </CalcCard>
@@ -506,13 +501,13 @@ export const CreateRequest: React.FC = () => {
 
           {currentStep === 4 && (
             <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>Крок 4: Перевірка та завершення</h3>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 1.5rem 0' }}>{t.createRequest.step4Title}</h3>
               <p style={{ color: '#4b5563', fontSize: '0.875rem', margin: '0 0 1.5rem 0' }}>
-                Будь ласка, перевірте правильність заповнених параметрів заявки перед відправкою.
+                {t.createRequest.step4Desc}
               </p>
 
               <SummarySection>
-                <SummaryTitle>Залучені документи</SummaryTitle>
+                <SummaryTitle>{t.createRequest.selectedDocuments}</SummaryTitle>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {selectedDocIds.map(docId => {
                     const doc = MOCK_DOCUMENTS.find(d => d.id === docId);
@@ -529,46 +524,46 @@ export const CreateRequest: React.FC = () => {
               </SummarySection>
 
               <SummarySection>
-                <SummaryTitle>Контрагенти та Сроки</SummaryTitle>
+                <SummaryTitle>{t.createRequest.counterparties}</SummaryTitle>
                 <SummaryGrid>
-                  <SummaryLabel>Дебітор:</SummaryLabel>
+                  <SummaryLabel>{t.requests.debtor}:</SummaryLabel>
                   <SummaryValue>{debtorName}</SummaryValue>
-                  <SummaryLabel>Код ЄДРПОУ:</SummaryLabel>
+                  <SummaryLabel>{t.companies.edrpou}:</SummaryLabel>
                   <SummaryValue>{debtorEdrpou}</SummaryValue>
-                  <SummaryLabel>Дата платежу:</SummaryLabel>
+                  <SummaryLabel>{t.requests.paymentDate}:</SummaryLabel>
                   <SummaryValue>{paymentDate}</SummaryValue>
                 </SummaryGrid>
               </SummarySection>
 
               <SummarySection>
-                <SummaryTitle>Параметри факторингу</SummaryTitle>
+                <SummaryTitle>{t.createRequest.factoringParams}</SummaryTitle>
                 <SummaryGrid>
-                  <SummaryLabel>Тип:</SummaryLabel>
+                  <SummaryLabel>{t.createRequest.factoringTypeLabel}:</SummaryLabel>
                   <SummaryValue>{getTypeNameCapital(factoringType)}</SummaryValue>
-                  <SummaryLabel>Підтип:</SummaryLabel>
+                  <SummaryLabel>{t.createRequest.recourseTypeLabel}:</SummaryLabel>
                   <SummaryValue>{getSubtypeNameCapital(recourseType)}</SummaryValue>
-                  <SummaryLabel>Відсоток:</SummaryLabel>
+                  <SummaryLabel>{t.createRequest.financingPercentLabel}:</SummaryLabel>
                   <SummaryValue>{financingPercent}%</SummaryValue>
-                  <SummaryLabel>Річна ставка:</SummaryLabel>
+                  <SummaryLabel>{t.createRequest.interestRateLabel}:</SummaryLabel>
                   <SummaryValue>{interestRate}%</SummaryValue>
-                  <SummaryLabel>Комісія:</SummaryLabel>
+                  <SummaryLabel>{t.createRequest.commissionRateLabel}:</SummaryLabel>
                   <SummaryValue>{commissionRate}%</SummaryValue>
                 </SummaryGrid>
               </SummarySection>
 
               <SummarySection>
-                <SummaryTitle>Очікувані показники виплати</SummaryTitle>
+                <SummaryTitle>{t.createRequest.expectedPayout}</SummaryTitle>
                 <CalcCard style={{ margin: 0, backgroundColor: '#f1f5f9' }}>
                   <CalcRow>
-                    <span>Фінансування:</span>
+                    <span>{t.createRequest.financing}:</span>
                     <span style={{ fontWeight: 600 }}>₴ {financingAmount.toLocaleString()}</span>
                   </CalcRow>
                   <CalcRow>
-                    <span>Збори фактора:</span>
+                    <span>{t.createRequest.factorFees}:</span>
                     <span>₴ {commissionAmount.toLocaleString()}</span>
                   </CalcRow>
                   <CalcRow $bold>
-                    <span>Загальний транш до виплати:</span>
+                    <span>{t.createRequest.totalPayout}:</span>
                     <span>₴ {(financingAmount - commissionAmount).toLocaleString()}</span>
                   </CalcRow>
                 </CalcCard>
@@ -580,7 +575,7 @@ export const CreateRequest: React.FC = () => {
         <FormFooter>
           {currentStep > 1 ? (
             <Button variant="outline" onClick={() => setCurrentStep(prev => prev - 1)}>
-              Назад
+              {t.common.back}
             </Button>
           ) : (
             <div />
@@ -592,11 +587,11 @@ export const CreateRequest: React.FC = () => {
               icon={<ArrowRight size={16} />}
               onClick={() => setCurrentStep(prev => prev + 1)}
             >
-              Продовжити
+              {t.createRequest.continue}
             </Button>
           ) : (
             <Button icon={<Save size={16} />} onClick={handleSubmit} disabled={loading}>
-              {loading ? 'Відправлення...' : 'Підтвердити та відправити'}
+              {loading ? t.common.loading : t.createRequest.confirm}
             </Button>
           )}
         </FormFooter>
