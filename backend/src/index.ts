@@ -448,6 +448,37 @@ app.delete('/api/users/:id', async (req, res) => {
   res.json({ success: true });
 });
 
+// Update user profile
+app.patch('/api/users/profile', async (req, res) => {
+  const { name, email, currentPassword, newPassword } = req.body;
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const jwt = require('jsonwebtoken');
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret-key');
+    const userId = decoded.id;
+    
+    const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
+    
+    if (newPassword) {
+      const bcrypt = require('bcryptjs');
+      const isValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isValid) {
+        return res.status(401).json({ error: 'Поточний пароль невірний' });
+      }
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await db.run('UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?', [name, email, hashedPassword, userId]);
+    } else {
+      await db.run('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, userId]);
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Помилка оновлення профілю' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

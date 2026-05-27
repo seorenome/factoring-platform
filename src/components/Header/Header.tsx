@@ -52,9 +52,10 @@ export const Header: React.FC = () => {
     navigate('/login');
   };
 
-  const handleProfile = () => {
-    setIsDropdownOpen(false);
-  };
+const handleProfile = () => {
+  setIsDropdownOpen(false);
+  navigate('/profile');
+};
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
