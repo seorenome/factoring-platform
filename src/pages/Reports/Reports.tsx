@@ -6,11 +6,9 @@ import { Card } from '../../components/Card/Card';
 import { Button } from '../../components/Button/Button';
 import { TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { FilterBar } from '../Requests/Requests.styled';
-import { Download, TrendingUp, Calendar, Loader2, FileText, FileSpreadsheet } from 'lucide-react';
+import { Download, TrendingUp, Calendar, Loader2, FileSpreadsheet } from 'lucide-react';
 import { api, Request } from '../../services/api';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 interface ReportData {
   month: string;
@@ -105,34 +103,6 @@ export const Reports: React.FC = () => {
     XLSX.writeFile(wb, `financial_report_${new Date().toISOString().slice(0,19)}.xlsx`);
   };
 
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    
-    doc.setFontSize(18);
-    doc.text(t.reports.title, 14, 20);
-    
-    doc.setFontSize(12);
-    doc.text(`Дата: ${new Date().toLocaleDateString()}`, 14, 35);
-    
-    const tableData = report.map(row => [
-      row.month,
-      `${(row.totalFinanced / 1000000).toFixed(2)} млн ₴`,
-      row.requestsCount.toString(),
-      `${(row.avgAmount / 1000).toFixed(0)} тис ₴`,
-      `${(row.overdueAmount / 1000).toFixed(0)} тис ₴`
-    ]);
-    
-    (doc as any).autoTable({
-      head: [[t.reports.month, t.reports.amount, t.reports.count, t.reports.average, t.reports.overdue]],
-      body: tableData,
-      startY: 50,
-      theme: 'striped',
-      headStyles: { fillColor: [37, 99, 235] }
-    });
-    
-    doc.save(`financial_report_${new Date().toISOString().slice(0,19)}.pdf`);
-  };
-
   if (loading) {
     return (
       <Layout>
@@ -150,9 +120,6 @@ export const Reports: React.FC = () => {
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Button variant="outline" icon={<FileSpreadsheet size={16} />} onClick={exportToExcel}>
             Excel
-          </Button>
-          <Button variant="outline" icon={<FileText size={16} />} onClick={exportToPDF}>
-            PDF
           </Button>
           <Button variant="outline" icon={<Download size={16} />} onClick={exportToCSV}>
             CSV
