@@ -46,10 +46,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { path: '/documents', label: t.common.documents, icon: <FileText size={20} />, roles: ['factor', 'supplier', 'debtor', 'admin'] },
     { path: '/companies', label: t.common.companies, icon: <Building2 size={20} />, roles: ['factor', 'admin'] },
     { path: '/users', label: t.common.users, icon: <Users size={20} />, roles: ['factor', 'admin'] },
-    { path: '/limits', label: 'Ліміти', icon: <ClipboardList size={20} />, roles: ['factor', 'admin'] },
-    { path: '/audit', label: 'Журнал аудиту', icon: <History size={20} />, roles: ['factor', 'admin'] },
-    { path: '/notifications', label: 'Повідомлення', icon: <Bell size={20} />, roles: ['factor', 'supplier', 'debtor', 'admin'] },
-    { path: '/reports', label: 'Звіти', icon: <BarChart3 size={20} />, roles: ['factor', 'admin'] },
+    { path: '/limits', label: t.common.limits, icon: <ClipboardList size={20} />, roles: ['factor', 'admin'] },
+    { path: '/audit', label: t.common.audit, icon: <History size={20} />, roles: ['factor', 'admin'] },
+    { path: '/notifications', label: t.common.notifications, icon: <Bell size={20} />, roles: ['factor', 'supplier', 'debtor', 'admin'] },
+    { path: '/reports', label: t.common.reports, icon: <BarChart3 size={20} />, roles: ['factor', 'admin'] },
     { path: '/settings', label: t.common.settings, icon: <Settings size={20} />, roles: ['factor', 'supplier', 'debtor', 'admin'] },
   ];
 

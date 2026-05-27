@@ -54,7 +54,6 @@ export const Header: React.FC = () => {
 
   const handleProfile = () => {
     setIsDropdownOpen(false);
-    // TODO: navigate to profile page
   };
 
   useEffect(() => {
@@ -67,9 +66,13 @@ export const Header: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const getPlatformName = () => {
+    return locale === 'uk' ? 'Факторингова платформа' : 'Factoring Platform';
+  };
+
   return (
     <HeaderContainer>
-      <Logo>FinFactor</Logo>
+      <Logo>{getPlatformName()}</Logo>
       <RightSection>
         <div style={{ position: 'relative' }} ref={dropdownRef}>
           <UserButton onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
@@ -83,7 +86,7 @@ export const Header: React.FC = () => {
             <DropdownMenu>
               <DropdownItem onClick={handleProfile}>
                 <User size={16} />
-                Мій профіль
+                {t.common.profile || 'Мій профіль'}
               </DropdownItem>
               <DropdownItem onClick={handleLogout}>
                 <LogOut size={16} />
