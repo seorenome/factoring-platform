@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
-import { FilterBar, Badge, ActionButton } from '../Requests/Requests.styled';
-import { Search, Filter, MoreHorizontal, Plus, UserPlus, Loader2 } from 'lucide-react';
-import { api } from '../../services/api';
+import { FilterBar, Badge } from '../Requests/Requests.styled';
+import { Search, Filter, UserPlus, Loader2 } from 'lucide-react';
 
 interface User {
   id: number;
@@ -25,8 +24,6 @@ export const Users: React.FC = () => {
 
   const loadUsers = async () => {
     try {
-      // TODO: Add backend endpoint for users
-      // For now, use mock data from auth demo users
       const mockUsers: User[] = [
         { id: 1, email: 'factor@finfactor.com', name: 'Олена Петренко', role: 'factor', createdAt: '2026-01-15' },
         { id: 2, email: 'supplier@finfactor.com', name: 'Іван Коваленко', role: 'supplier', createdAt: '2026-02-10' },
@@ -102,7 +99,6 @@ export const Users: React.FC = () => {
               <Th>Email</Th>
               <Th>Роль</Th>
               <Th>Дата реєстрації</Th>
-              <Th></Th>
             </tr>
           </thead>
           <tbody>
@@ -112,11 +108,6 @@ export const Users: React.FC = () => {
                 <Td>{user.email}</Td>
                 <Td>{getRoleBadge(user.role)}</Td>
                 <Td>{new Date(user.createdAt).toLocaleDateString()}</Td>
-                <Td style={{ textAlign: 'right' }}>
-                  <ActionButton>
-                    <MoreHorizontal size={18} />
-                  </ActionButton>
-                </Td>
               </tr>
             ))}
           </tbody>

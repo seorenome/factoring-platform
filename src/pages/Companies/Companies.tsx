@@ -3,17 +3,9 @@ import { useI18n } from '../../i18n/I18nContext';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
-import { FilterBar, Badge, ActionButton } from '../Requests/Requests.styled';
-import { Search, Filter, MoreHorizontal, Plus, Loader2 } from 'lucide-react';
-import { api } from '../../services/api';
-
-interface Company {
-  id: number;
-  name: string;
-  edrpou: string;
-  kycStatus: 'approved' | 'pending' | 'rejected';
-  createdAt: string;
-}
+import { FilterBar, Badge } from '../Requests/Requests.styled';
+import { Search, Filter, Plus, Loader2 } from 'lucide-react';
+import { api, Company } from '../../services/api';
 
 export const Companies: React.FC = () => {
   const { t } = useI18n();
@@ -105,7 +97,6 @@ export const Companies: React.FC = () => {
               <Th>Роль</Th>
               <Th>KYC / AML Статус</Th>
               <Th>Дата реєстрації</Th>
-              <Th></Th>
             </tr>
           </thead>
           <tbody>
@@ -116,11 +107,6 @@ export const Companies: React.FC = () => {
                 <Td>{getRoleLabel(company.name, company.edrpou)}</Td>
                 <Td>{getStatusBadge(company.kycStatus)}</Td>
                 <Td>{new Date(company.createdAt).toLocaleDateString()}</Td>
-                <Td style={{ textAlign: 'right' }}>
-                  <ActionButton>
-                    <MoreHorizontal size={18} />
-                  </ActionButton>
-                </Td>
               </tr>
             ))}
           </tbody>

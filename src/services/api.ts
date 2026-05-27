@@ -148,6 +148,26 @@ class ApiService {
     return this.request('/limits');
   }
 
+  async createLimit(data: Omit<Limit, 'id' | 'createdAt' | 'status' | 'usedAmount' | 'availableAmount'>): Promise<Limit> {
+    return this.request('/limits', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateLimit(id: number, data: Partial<Limit>): Promise<void> {
+    return this.request(`/limits/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteLimit(id: number): Promise<void> {
+    return this.request(`/limits/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getCompanies(): Promise<Company[]> {
     return this.request('/companies');
   }

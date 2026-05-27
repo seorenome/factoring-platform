@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
-import { FilterBar, TabsContainer, TabItem, Badge, ActionButton } from './Requests.styled';
-import { Search, Filter, MoreHorizontal, FilePlus, Loader2 } from 'lucide-react';
+import { FilterBar, TabsContainer, TabItem, Badge } from './Requests.styled';
+import { Search, Filter, FilePlus, Loader2 } from 'lucide-react';
 import { api, Request } from '../../services/api';
 
 export const Requests: React.FC = () => {
@@ -124,7 +124,6 @@ export const Requests: React.FC = () => {
               <Th>Дебітор</Th>
               <Th>Сума</Th>
               <Th>Статус</Th>
-              <Th></Th>
             </tr>
           </thead>
           <tbody>
@@ -140,11 +139,6 @@ export const Requests: React.FC = () => {
                 <Td>{req.debtorName}</Td>
                 <Td>₴ {req.amount.toLocaleString()}</Td>
                 <Td><Badge $status={req.status}>{getStatusText(req.status)}</Badge></Td>
-                <Td style={{ textAlign: 'right' }}>
-                  <ActionButton onClick={(e) => { e.stopPropagation(); }}>
-                    <MoreHorizontal size={18} />
-                  </ActionButton>
-                </Td>
               </tr>
             ))}
           </tbody>

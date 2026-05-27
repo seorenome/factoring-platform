@@ -3,9 +3,8 @@ import { useI18n } from '../../i18n/I18nContext';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
-import { FilterBar, Badge, ActionButton } from '../Requests/Requests.styled';
-import { Search, Filter, MoreHorizontal, Upload, FileText, Loader2 } from 'lucide-react';
-import { api } from '../../services/api';
+import { FilterBar, Badge } from '../Requests/Requests.styled';
+import { Search, Filter, Upload, FileText, Loader2 } from 'lucide-react';
 
 interface Document {
   id: string;
@@ -14,7 +13,6 @@ interface Document {
   date: string;
   supplierName: string;
   status: 'verified' | 'pending' | 'rejected';
-  fileUrl?: string;
 }
 
 export const Documents: React.FC = () => {
@@ -29,8 +27,6 @@ export const Documents: React.FC = () => {
 
   const loadDocuments = async () => {
     try {
-      // TODO: Add backend endpoint for documents
-      // For now, use mock data
       const mockDocuments: Document[] = [
         { id: 'DOC-101', name: 'Рахунок-фактура №142.pdf', type: 'Рахунок-фактура', date: '2026-05-08', supplierName: 'ТОВ "Постач-Пром"', status: 'verified' },
         { id: 'DOC-102', name: 'Видаткова_накладна_ВН-88.pdf', type: 'Видаткова накладна', date: '2026-05-08', supplierName: 'ТОВ "Постач-Пром"', status: 'pending' },
@@ -106,7 +102,6 @@ export const Documents: React.FC = () => {
               <Th>Дата</Th>
               <Th>Контрагент</Th>
               <Th>Статус</Th>
-              <Th></Th>
             </tr>
           </thead>
           <tbody>
@@ -122,11 +117,6 @@ export const Documents: React.FC = () => {
                 <Td>{doc.date}</Td>
                 <Td>{doc.supplierName}</Td>
                 <Td>{getStatusBadge(doc.status)}</Td>
-                <Td style={{ textAlign: 'right' }}>
-                  <ActionButton>
-                    <MoreHorizontal size={18} />
-                  </ActionButton>
-                </Td>
               </tr>
             ))}
           </tbody>

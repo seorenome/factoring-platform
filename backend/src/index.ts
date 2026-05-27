@@ -13,6 +13,12 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Global UTF-8 middleware
+app.use((req, res, next) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
+
 let db: any;
 
 const initDb = async () => {
@@ -21,7 +27,6 @@ const initDb = async () => {
     driver: sqlite3.Database
   });
 
-  // Users table
   await db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,7 +38,6 @@ const initDb = async () => {
     )
   `);
 
-  // Companies table
   await db.exec(`
     CREATE TABLE IF NOT EXISTS companies (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,7 +48,6 @@ const initDb = async () => {
     )
   `);
 
-  // Limits table
   await db.exec(`
     CREATE TABLE IF NOT EXISTS limits (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,7 +63,6 @@ const initDb = async () => {
     )
   `);
 
-  // Requests table
   await db.exec(`
     CREATE TABLE IF NOT EXISTS requests (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,7 +82,6 @@ const initDb = async () => {
     )
   `);
 
-  // Audit log table
   await db.exec(`
     CREATE TABLE IF NOT EXISTS audit_log (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,7 +98,6 @@ const initDb = async () => {
     )
   `);
 
-  // Insert demo users if empty
   const userCount = await db.get('SELECT COUNT(*) as count FROM users');
   if (userCount.count === 0) {
     const bcrypt = require('bcryptjs');
@@ -121,7 +121,6 @@ const initDb = async () => {
     );
   }
 
-  // Insert demo companies if empty
   const companyCount = await db.get('SELECT COUNT(*) as count FROM companies');
   if (companyCount.count === 0) {
     await db.run(
@@ -142,7 +141,6 @@ const initDb = async () => {
     );
   }
 
-  // Insert demo limits if empty
   const limitCount = await db.get('SELECT COUNT(*) as count FROM limits');
   if (limitCount.count === 0) {
     await db.run(
@@ -157,7 +155,6 @@ const initDb = async () => {
     );
   }
 
-  // Insert demo requests if empty
   const requestCount = await db.get('SELECT COUNT(*) as count FROM requests');
   if (requestCount.count === 0) {
     await db.run(
@@ -177,7 +174,6 @@ const initDb = async () => {
     );
   }
 
-  // Insert demo audit log if empty
   const auditCount = await db.get('SELECT COUNT(*) as count FROM audit_log');
   if (auditCount.count === 0) {
     await db.run(
@@ -206,58 +202,28 @@ app.get('/api/requests', async (req, res) => {
   res.json(requests);
 });
 
-app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
-  const bcrypt = require('bcryptjs');
-  const jwt = require('jsonwebtoken');
-
-  const user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+app.post('/api/requests', async (req, res) => {
+  const { requestNumber, supplierId, supplierName, debtorId, debtorName, debtorEdrpou, amount, financingAmount, factoringType, recourseType, paymentDate } = req.body;
+  
+  try {
+    const result = await db.run(
+      `INSERT INTO requests (requestNumber, supplierId, supplierName, debtorId, debtorName, debtorEdrpou, amount, financingAmount, factoringType, recourseType, status, paymentDate, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [requestNumber, supplierId, supplierName, debtorId, debtorName, debtorEdrpou, amount, financingAmount, factoringType, recourseType, 'pending', paymentDate, new Date().toISOString()]
+    );
+    
+    const user = await db.get('SELECT * FROM users WHERE id = ?', [supplierId]);
+    await db.run(
+      `INSERT INTO audit_log (userId, userName, userRole, action, entityType, entityId, entityName, details, ipAddress)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [supplierId, supplierName, user?.role || 'supplier', 'CREATE', 'request', requestNumber, `Заявка ${requestNumber}`, 'Створено нову заявку', req.ip || 'unknown']
+    );
+    
+    res.json({ id: result.lastID, success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create request' });
   }
-
-  const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  const token = jwt.sign(
-    { id: user.id, email: user.email, name: user.name, role: user.role },
-    process.env.JWT_SECRET || 'secret-key',
-    { expiresIn: '24h' }
-  );
-
-  // Log to audit
-  await db.run(
-    `INSERT INTO audit_log (userId, userName, userRole, action, entityType, entityId, entityName, details, ipAddress)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [user.id, user.name, user.role, 'LOGIN', 'auth', String(user.id), 'Вхід в систему', 'Успішний вхід', req.ip || 'unknown']
-  );
-
-  res.json({
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role
-    }
-  });
-});
-
-app.get('/api/limits', async (req, res) => {
-  const limits = await db.all('SELECT * FROM limits');
-  res.json(limits);
-});
-
-app.get('/api/companies', async (req, res) => {
-  const companies = await db.all('SELECT * FROM companies');
-  res.json(companies);
-});
-
-app.get('/api/audit', async (req, res) => {
-  const audit = await db.all('SELECT * FROM audit_log ORDER BY createdAt DESC LIMIT 100');
-  res.json(audit);
 });
 
 app.post('/api/requests/:id/approve', async (req, res) => {
@@ -285,34 +251,131 @@ app.post('/api/requests/:id/approve', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Limits CRUD
+app.get('/api/limits', async (req, res) => {
+  const limits = await db.all('SELECT * FROM limits');
+  res.json(limits);
 });
 
-app.post('/api/requests', async (req, res) => {
-  const { requestNumber, supplierId, supplierName, debtorId, debtorName, debtorEdrpou, amount, financingAmount, factoringType, recourseType, paymentDate } = req.body;
+app.post('/api/limits', async (req, res) => {
+  const { supplierId, supplierName, debtorId, debtorName, limitAmount, usedAmount, availableAmount } = req.body;
   
   try {
     const result = await db.run(
-      `INSERT INTO requests (requestNumber, supplierId, supplierName, debtorId, debtorName, debtorEdrpou, amount, financingAmount, factoringType, recourseType, status, paymentDate, createdAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [requestNumber, supplierId, supplierName, debtorId, debtorName, debtorEdrpou, amount, financingAmount, factoringType, recourseType, 'pending', paymentDate, new Date().toISOString()]
+      `INSERT INTO limits (supplierId, supplierName, debtorId, debtorName, limitAmount, usedAmount, availableAmount, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [supplierId, supplierName, debtorId, debtorName, limitAmount, usedAmount || 0, availableAmount || limitAmount, 'active']
     );
     
-    // Log to audit
-    const user = await db.get('SELECT * FROM users WHERE id = ?', [supplierId]);
     await db.run(
       `INSERT INTO audit_log (userId, userName, userRole, action, entityType, entityId, entityName, details, ipAddress)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [supplierId, supplierName, user?.role || 'supplier', 'CREATE', 'request', requestNumber, `Заявка ${requestNumber}`, 'Створено нову заявку', req.ip || 'unknown']
+      [1, 'Система', 'factor', 'CREATE', 'limit', String(result.lastID), `Ліміт для ${supplierName}`, `Створено ліміт на суму ${limitAmount}`, req.ip || 'unknown']
     );
     
     res.json({ id: result.lastID, success: true });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to create request' });
+    res.status(500).json({ error: 'Failed to create limit' });
   }
 });
 
-initDb().catch(console.error);
+app.patch('/api/limits/:id', async (req, res) => {
+  const { id } = req.params;
+  const { limitAmount, availableAmount } = req.body;
+  
+  try {
+    await db.run(
+      'UPDATE limits SET limitAmount = ?, availableAmount = ? WHERE id = ?',
+      [limitAmount, availableAmount, id]
+    );
+    
+    const limit = await db.get('SELECT * FROM limits WHERE id = ?', [id]);
+    
+    await db.run(
+      `INSERT INTO audit_log (userId, userName, userRole, action, entityType, entityId, entityName, details, ipAddress)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [1, 'Система', 'factor', 'UPDATE', 'limit', id, `Ліміт ${limit?.supplierName}`, `Оновлено ліміт до ${limitAmount}`, req.ip || 'unknown']
+    );
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update limit' });
+  }
+});
 
+app.delete('/api/limits/:id', async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const limit = await db.get('SELECT * FROM limits WHERE id = ?', [id]);
+    
+    await db.run('DELETE FROM limits WHERE id = ?', [id]);
+    
+    await db.run(
+      `INSERT INTO audit_log (userId, userName, userRole, action, entityType, entityId, entityName, details, ipAddress)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [1, 'Система', 'factor', 'DELETE', 'limit', id, `Ліміт ${limit?.supplierName}`, `Видалено ліміт`, req.ip || 'unknown']
+    );
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to delete limit' });
+  }
+});
+
+app.get('/api/companies', async (req, res) => {
+  const companies = await db.all('SELECT * FROM companies');
+  res.json(companies);
+});
+
+app.get('/api/audit', async (req, res) => {
+  const audit = await db.all('SELECT * FROM audit_log ORDER BY createdAt DESC LIMIT 100');
+  res.json(audit);
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  const bcrypt = require('bcryptjs');
+  const jwt = require('jsonwebtoken');
+
+  const user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  const isValid = await bcrypt.compare(password, user.password);
+  if (!isValid) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  const token = jwt.sign(
+    { id: user.id, email: user.email, name: user.name, role: user.role },
+    process.env.JWT_SECRET || 'secret-key',
+    { expiresIn: '24h' }
+  );
+
+  await db.run(
+    `INSERT INTO audit_log (userId, userName, userRole, action, entityType, entityId, entityName, details, ipAddress)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [user.id, user.name, user.role, 'LOGIN', 'auth', String(user.id), 'Вхід в систему', 'Успішний вхід', req.ip || 'unknown']
+  );
+
+  res.json({
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role
+    }
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+initDb().catch(console.error);
