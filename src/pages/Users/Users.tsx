@@ -3,15 +3,8 @@ import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
 import { FilterBar, Badge } from '../Requests/Requests.styled';
-import { Search, Filter, UserPlus, Loader2 } from 'lucide-react';
-
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  role: 'factor' | 'supplier' | 'debtor' | 'admin';
-  createdAt: string;
-}
+import { Search, Filter, UserPlus, Trash2, Loader2 } from 'lucide-react';
+import { api, User } from '../../services/api';
 
 export const Users: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -24,17 +17,22 @@ export const Users: React.FC = () => {
 
   const loadUsers = async () => {
     try {
-      const mockUsers: User[] = [
-        { id: 1, email: 'factor@finfactor.com', name: 'Олена Петренко', role: 'factor', createdAt: '2026-01-15' },
-        { id: 2, email: 'supplier@finfactor.com', name: 'Іван Коваленко', role: 'supplier', createdAt: '2026-02-10' },
-        { id: 3, email: 'debtor@finfactor.com', name: 'Андрій Мельник', role: 'debtor', createdAt: '2026-03-05' },
-        { id: 4, email: 'admin@finfactor.com', name: 'Адміністратор', role: 'admin', createdAt: '2026-01-01' },
-      ];
-      setUsers(mockUsers);
+      const data = await api.getUsers();
+      setUsers(data);
     } catch (error) {
       console.error('Failed to load users:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Ви впевнені, що хочете видалити цього користувача?')) return;
+    try {
+      await api.deleteUser(id);
+      await loadUsers();
+    } catch (error) {
+      console.error('Failed to delete user:', error);
     }
   };
 
@@ -99,6 +97,7 @@ export const Users: React.FC = () => {
               <Th>Email</Th>
               <Th>Роль</Th>
               <Th>Дата реєстрації</Th>
+              <Th></Th>
             </tr>
           </thead>
           <tbody>
@@ -108,6 +107,11 @@ export const Users: React.FC = () => {
                 <Td>{user.email}</Td>
                 <Td>{getRoleBadge(user.role)}</Td>
                 <Td>{new Date(user.createdAt).toLocaleDateString()}</Td>
+                <Td style={{ textAlign: 'right' }}>
+                  <button onClick={() => handleDelete(user.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>
+                    <Trash2 size={18} />
+                  </button>
+                </Td>
               </tr>
             ))}
           </tbody>

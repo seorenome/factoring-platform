@@ -5,6 +5,7 @@ export interface User {
   email: string;
   name: string;
   role: 'factor' | 'supplier' | 'debtor' | 'admin';
+  createdAt: string;
 }
 
 export interface Request {
@@ -56,6 +57,18 @@ export interface AuditEntry {
   entityName: string;
   details: string;
   ipAddress: string;
+  createdAt: string;
+}
+
+export interface Document {
+  id: number;
+  documentNumber: string;
+  name: string;
+  type: string;
+  supplierId: number;
+  supplierName: string;
+  fileUrl?: string;
+  status: 'verified' | 'pending' | 'rejected';
   createdAt: string;
 }
 
@@ -174,6 +187,39 @@ class ApiService {
 
   async getAudit(): Promise<AuditEntry[]> {
     return this.request('/audit');
+  }
+
+  async getDocuments(): Promise<Document[]> {
+    return this.request('/documents');
+  }
+
+  async createDocument(data: Omit<Document, 'id' | 'createdAt'>): Promise<Document> {
+    return this.request('/documents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async verifyDocument(id: number): Promise<void> {
+    return this.request(`/documents/${id}/verify`, {
+      method: 'PATCH',
+    });
+  }
+
+  async deleteDocument(id: number): Promise<void> {
+    return this.request(`/documents/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getUsers(): Promise<User[]> {
+    return this.request('/users');
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    return this.request(`/users/${id}`, {
+      method: 'DELETE',
+    });
   }
 }
 

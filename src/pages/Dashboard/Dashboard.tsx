@@ -174,51 +174,51 @@ export const Dashboard: React.FC = () => {
         </Card>
       </Grid>
 
-      {/* Charts Row */}
-      <Grid style={{ gridTemplateColumns: '1fr 1fr' }}>
-        {/* Monthly Financing Chart */}
-        <TableContainer>
-          <TableHeader>Динаміка фінансування (млн ₴)</TableHeader>
-          <div style={{ padding: '1rem', height: '280px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value) => [`${value} млн ₴`, 'Фінансування']} />
-                <Legend />
-                <Line type="monotone" dataKey="financed" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </TableContainer>
+{/* Charts Row */}
+<Grid style={{ gridTemplateColumns: '1fr 1fr', minWidth: 0 }}>
+  {/* Monthly Financing Chart */}
+  <TableContainer>
+    <TableHeader>Динаміка фінансування (млн ₴)</TableHeader>
+    <div style={{ padding: '1rem', height: '280px', width: '100%' }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={monthlyData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="month" />
+          <YAxis />
+          <Tooltip formatter={(value) => [`${value} млн ₴`, 'Фінансування']} />
+          <Legend />
+          <Line type="monotone" dataKey="financed" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 4 }} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  </TableContainer>
 
-        {/* Factoring Type Distribution */}
-        <TableContainer>
-          <TableHeader>Розподіл за типами факторингу</TableHeader>
-          <div style={{ padding: '1rem', height: '280px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={factoringTypeData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={90}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {factoringTypeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </TableContainer>
-      </Grid>
+  {/* Factoring Type Distribution */}
+  <TableContainer>
+    <TableHeader>Розподіл за типами факторингу</TableHeader>
+    <div style={{ padding: '1rem', height: '280px', width: '100%' }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={factoringTypeData}
+            cx="50%"
+            cy="50%"
+            innerRadius={50}
+            outerRadius={90}
+            paddingAngle={5}
+            dataKey="value"
+            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+          >
+            {factoringTypeData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  </TableContainer>
+</Grid>
 
       {/* Top 5 Debtors */}
       <TableContainer style={{ marginBottom: '2rem' }}>

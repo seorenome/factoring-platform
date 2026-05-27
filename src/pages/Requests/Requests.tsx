@@ -4,7 +4,7 @@ import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
 import { FilterBar, TabsContainer, TabItem, Badge } from './Requests.styled';
-import { Search, Filter, FilePlus, Loader2 } from 'lucide-react';
+import { Search, Filter, FilePlus, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api, Request } from '../../services/api';
 
 export const Requests: React.FC = () => {
@@ -13,6 +13,8 @@ export const Requests: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     loadRequests();
@@ -61,6 +63,15 @@ export const Requests: React.FC = () => {
   };
 
   const filteredRequests = getFilteredRequests();
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+  const paginatedRequests = filteredRequests.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   if (loading) {
     return (
@@ -82,13 +93,13 @@ export const Requests: React.FC = () => {
       </DashboardHeader>
 
       <TabsContainer>
-        <TabItem $active={activeTab === 'all'} onClick={() => setActiveTab('all')}>
+        <TabItem $active={activeTab === 'all'} onClick={() => { setActiveTab('all'); setCurrentPage(1); }}>
           Всі заявки ({requests.length})
         </TabItem>
-        <TabItem $active={activeTab === 'pending'} onClick={() => setActiveTab('pending')}>
+        <TabItem $active={activeTab === 'pending'} onClick={() => { setActiveTab('pending'); setCurrentPage(1); }}>
           На розгляді ({requests.filter(r => r.status === 'pending').length})
         </TabItem>
-        <TabItem $active={activeTab === 'approved'} onClick={() => setActiveTab('approved')}>
+        <TabItem $active={activeTab === 'approved'} onClick={() => { setActiveTab('approved'); setCurrentPage(1); }}>
           Схвалені ({requests.filter(r => r.status === 'approved').length})
         </TabItem>
       </TabsContainer>
@@ -127,7 +138,7 @@ export const Requests: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredRequests.map(req => (
+            {paginatedRequests.map(req => (
               <tr 
                 key={req.id} 
                 onClick={() => navigate(`/requests/${req.id}`)}
@@ -143,6 +154,28 @@ export const Requests: React.FC = () => {
             ))}
           </tbody>
         </Table>
+        
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', padding: '1rem 1.5rem', borderTop: '1px solid #e5e5e5' }}>
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{ background: 'none', border: 'none', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: currentPage === 1 ? '#d1d5db' : '#6b7280', display: 'flex', alignItems: 'center' }}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+              Сторінка {currentPage} з {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{ background: 'none', border: 'none', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: currentPage === totalPages ? '#d1d5db' : '#6b7280', display: 'flex', alignItems: 'center' }}
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </TableContainer>
     </Layout>
   );

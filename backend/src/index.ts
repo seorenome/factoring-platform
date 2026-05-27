@@ -98,6 +98,21 @@ const initDb = async () => {
     )
   `);
 
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS documents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      documentNumber TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      supplierId INTEGER NOT NULL,
+      supplierName TEXT NOT NULL,
+      fileUrl TEXT,
+      status TEXT DEFAULT 'pending',
+      createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (supplierId) REFERENCES users(id)
+    )
+  `);
+
   const userCount = await db.get('SELECT COUNT(*) as count FROM users');
   if (userCount.count === 0) {
     const bcrypt = require('bcryptjs');
@@ -193,6 +208,25 @@ const initDb = async () => {
     );
   }
 
+  const docCount = await db.get('SELECT COUNT(*) as count FROM documents');
+  if (docCount.count === 0) {
+    await db.run(
+      `INSERT INTO documents (documentNumber, name, type, supplierId, supplierName, status, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ['DOC-101', 'Рахунок-фактура №142.pdf', 'invoice', 2, 'ТОВ "Постач-Пром"', 'verified', new Date().toISOString()]
+    );
+    await db.run(
+      `INSERT INTO documents (documentNumber, name, type, supplierId, supplierName, status, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ['DOC-102', 'Видаткова_накладна_ВН-88.pdf', 'act', 2, 'ТОВ "Постач-Пром"', 'pending', new Date().toISOString()]
+    );
+    await db.run(
+      `INSERT INTO documents (documentNumber, name, type, supplierId, supplierName, status, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ['DOC-103', 'Договір_поставки_12-А.pdf', 'contract', 3, 'ФОП Коваленко', 'verified', new Date().toISOString()]
+    );
+  }
+
   console.log('Database initialized with demo data');
 };
 
@@ -251,7 +285,6 @@ app.post('/api/requests/:id/approve', async (req, res) => {
   }
 });
 
-// Limits CRUD
 app.get('/api/limits', async (req, res) => {
   const limits = await db.all('SELECT * FROM limits');
   res.json(limits);
@@ -336,6 +369,35 @@ app.get('/api/audit', async (req, res) => {
   res.json(audit);
 });
 
+app.get('/api/documents', async (req, res) => {
+  const documents = await db.all('SELECT * FROM documents ORDER BY createdAt DESC');
+  res.json(documents);
+});
+
+app.post('/api/documents', async (req, res) => {
+  const { documentNumber, name, type, supplierId, supplierName, fileUrl } = req.body;
+  
+  const result = await db.run(
+    `INSERT INTO documents (documentNumber, name, type, supplierId, supplierName, fileUrl, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [documentNumber, name, type, supplierId, supplierName, fileUrl, 'pending']
+  );
+  
+  res.json({ id: result.lastID, success: true });
+});
+
+app.patch('/api/documents/:id/verify', async (req, res) => {
+  const { id } = req.params;
+  await db.run('UPDATE documents SET status = ? WHERE id = ?', ['verified', id]);
+  res.json({ success: true });
+});
+
+app.delete('/api/documents/:id', async (req, res) => {
+  const { id } = req.params;
+  await db.run('DELETE FROM documents WHERE id = ?', [id]);
+  res.json({ success: true });
+});
+
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   const bcrypt = require('bcryptjs');
@@ -372,6 +434,18 @@ app.post('/api/auth/login', async (req, res) => {
       role: user.role
     }
   });
+});
+
+// Users CRUD
+app.get('/api/users', async (req, res) => {
+  const users = await db.all('SELECT id, email, name, role, createdAt FROM users ORDER BY createdAt DESC');
+  res.json(users);
+});
+
+app.delete('/api/users/:id', async (req, res) => {
+  const { id } = req.params;
+  await db.run('DELETE FROM users WHERE id = ?', [id]);
+  res.json({ success: true });
 });
 
 app.listen(PORT, () => {
