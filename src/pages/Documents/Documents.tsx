@@ -1,28 +1,49 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useI18n } from '../../i18n/I18nContext';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { Button } from '../../components/Button/Button';
 import { FilterBar, Badge, ActionButton } from '../Requests/Requests.styled';
-import { Search, Filter, MoreHorizontal, Upload, FileText } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Upload, FileText, Loader2 } from 'lucide-react';
+import { api } from '../../services/api';
 
 interface Document {
   id: string;
   name: string;
   type: string;
   date: string;
-  supplier: string;
+  supplierName: string;
   status: 'verified' | 'pending' | 'rejected';
+  fileUrl?: string;
 }
-
-const MOCK_DOCS: Document[] = [
-  { id: 'DOC-101', name: 'Рахунок-фактура №142.pdf', type: 'Рахунок-фактура', date: '2026-05-08', supplier: 'ТОВ "Постач-Пром"', status: 'verified' },
-  { id: 'DOC-102', name: 'Видаткова_накладна_ВН-88.pdf', type: 'Видаткова накладна', date: '2026-05-08', supplier: 'ТОВ "Постач-Пром"', status: 'pending' },
-  { id: 'DOC-103', name: 'Договір_поставки_12-А.pdf', type: 'Договір', date: '2026-05-01', supplier: 'ФОП Коваленко', status: 'verified' },
-];
 
 export const Documents: React.FC = () => {
   const { t } = useI18n();
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const loadDocuments = async () => {
+    try {
+      // TODO: Add backend endpoint for documents
+      // For now, use mock data
+      const mockDocuments: Document[] = [
+        { id: 'DOC-101', name: 'Рахунок-фактура №142.pdf', type: 'Рахунок-фактура', date: '2026-05-08', supplierName: 'ТОВ "Постач-Пром"', status: 'verified' },
+        { id: 'DOC-102', name: 'Видаткова_накладна_ВН-88.pdf', type: 'Видаткова накладна', date: '2026-05-08', supplierName: 'ТОВ "Постач-Пром"', status: 'pending' },
+        { id: 'DOC-103', name: 'Договір_поставки_12-А.pdf', type: 'Договір', date: '2026-05-01', supplierName: 'ФОП Коваленко', status: 'verified' },
+        { id: 'DOC-104', name: 'Рахунок-фактура №221.pdf', type: 'Рахунок-фактура', date: '2026-05-10', supplierName: 'ФОП Коваленко', status: 'pending' },
+      ];
+      setDocuments(mockDocuments);
+    } catch (error) {
+      console.error('Failed to load documents:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: Document['status']) => {
     switch(status) {
@@ -31,6 +52,22 @@ export const Documents: React.FC = () => {
       case 'rejected': return <Badge $status="rejected">Відхилено</Badge>;
     }
   };
+
+  const filteredDocuments = documents.filter(doc =>
+    doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doc.supplierName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doc.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <Layout>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <Loader2 size={32} className="animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -45,6 +82,8 @@ export const Documents: React.FC = () => {
           <input 
             type="text" 
             placeholder="Пошук за назвою або ID..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             style={{ 
               width: '100%', 
               padding: '0.625rem 1rem 0.625rem 2.5rem', 
@@ -58,7 +97,7 @@ export const Documents: React.FC = () => {
       </FilterBar>
 
       <TableContainer>
-        <TableHeader style={{ fontSize: '0.875rem' }}>Всі документи ({MOCK_DOCS.length})</TableHeader>
+        <TableHeader>Всі документи ({filteredDocuments.length})</TableHeader>
         <Table>
           <thead>
             <tr>
@@ -71,7 +110,7 @@ export const Documents: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {MOCK_DOCS.map(doc => (
+            {filteredDocuments.map(doc => (
               <tr key={doc.id}>
                 <Td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 500, color: '#111827' }}>
@@ -81,7 +120,7 @@ export const Documents: React.FC = () => {
                 </Td>
                 <Td>{doc.type}</Td>
                 <Td>{doc.date}</Td>
-                <Td>{doc.supplier}</Td>
+                <Td>{doc.supplierName}</Td>
                 <Td>{getStatusBadge(doc.status)}</Td>
                 <Td style={{ textAlign: 'right' }}>
                   <ActionButton>

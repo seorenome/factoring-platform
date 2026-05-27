@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '../../components/Layout/Layout';
 import { DashboardHeader, Title, Grid } from '../Dashboard/Dashboard.styled';
 import { Card } from '../../components/Card/Card';
 import { Button } from '../../components/Button/Button';
 import { TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { FilterBar } from '../Requests/Requests.styled';
-import { Download, TrendingUp, TrendingDown, AlertTriangle, Calendar } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, AlertTriangle, Calendar, Loader2 } from 'lucide-react';
+import { api, Request } from '../../services/api';
 
 interface ReportData {
   month: string;
@@ -15,21 +16,63 @@ interface ReportData {
   overdueAmount: number;
 }
 
-const MOCK_REPORT: ReportData[] = [
-  { month: 'Січень 2026', totalFinanced: 3500000, requestsCount: 14, avgAmount: 250000, overdueAmount: 120000 },
-  { month: 'Лютий 2026', totalFinanced: 4200000, requestsCount: 18, avgAmount: 233333, overdueAmount: 95000 },
-  { month: 'Березень 2026', totalFinanced: 5100000, requestsCount: 22, avgAmount: 231818, overdueAmount: 145000 },
-  { month: 'Квітень 2026', totalFinanced: 4800000, requestsCount: 20, avgAmount: 240000, overdueAmount: 110000 },
-  { month: 'Травень 2026', totalFinanced: 2500000, requestsCount: 11, avgAmount: 227273, overdueAmount: 45000 },
-];
-
 export const Reports: React.FC = () => {
   const [period, setPeriod] = useState('2026');
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const totalFinanced = MOCK_REPORT.reduce((sum, m) => sum + m.totalFinanced, 0);
-  const totalRequests = MOCK_REPORT.reduce((sum, m) => sum + m.requestsCount, 0);
-  const totalOverdue = MOCK_REPORT.reduce((sum, m) => sum + m.overdueAmount, 0);
-  const overduePercent = (totalOverdue / totalFinanced) * 100;
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const data = await api.getRequests();
+      setRequests(data);
+    } catch (error) {
+      console.error('Failed to load reports data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateReport = (): ReportData[] => {
+    const months = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
+    const currentYear = new Date().getFullYear();
+    
+    return months.slice(0, 5).map((month, index) => {
+      const monthRequests = requests.filter(r => {
+        const date = new Date(r.createdAt);
+        return date.getMonth() === index && date.getFullYear() === currentYear;
+      });
+      
+      const totalFinanced = monthRequests.reduce((sum, r) => sum + r.financingAmount, 0);
+      const requestsCount = monthRequests.length;
+      const avgAmount = requestsCount > 0 ? totalFinanced / requestsCount : 0;
+      
+      return {
+        month: `${month} ${currentYear}`,
+        totalFinanced,
+        requestsCount,
+        avgAmount,
+        overdueAmount: 0,
+      };
+    });
+  };
+
+  const report = generateReport();
+  const totalFinanced = report.reduce((sum, m) => sum + m.totalFinanced, 0);
+  const totalRequests = report.reduce((sum, m) => sum + m.requestsCount, 0);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <Loader2 size={32} className="animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -59,7 +102,7 @@ export const Reports: React.FC = () => {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
             <TrendingUp size={16} color="#10b981" />
-            <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 500 }}>+8.5% до попереднього періоду</span>
+            <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 500 }}>За даними заявок</span>
           </div>
         </Card>
         <Card
@@ -67,23 +110,13 @@ export const Reports: React.FC = () => {
           value={totalRequests}
         />
         <Card
-          title="Прострочена заборгованість"
-          value={`₴ ${(totalOverdue / 1000000).toFixed(2)} млн`}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <AlertTriangle size={16} color="#f59e0b" />
-            <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 500 }}>{overduePercent.toFixed(1)}% від обсягу</span>
-          </div>
-        </Card>
+          title="Активні заявки"
+          value={requests.filter(r => r.status === 'pending').length}
+        />
         <Card
-          title="Ризик-профіль"
-          value="Низький"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <TrendingDown size={16} color="#10b981" />
-            <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Жодних санкційних ризиків</span>
-          </div>
-        </Card>
+          title="Схвалені заявки"
+          value={requests.filter(r => r.status === 'approved').length}
+        />
       </Grid>
 
       <TableContainer>
@@ -99,15 +132,13 @@ export const Reports: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {MOCK_REPORT.map(row => (
+            {report.map(row => (
               <tr key={row.month}>
                 <Td style={{ fontWeight: 500 }}>{row.month}</Td>
                 <Td>₴ {(row.totalFinanced / 1000000).toFixed(1)} млн</Td>
                 <Td>{row.requestsCount}</Td>
                 <Td>₴ {(row.avgAmount / 1000).toFixed(0)} тис</Td>
-                <Td style={{ color: row.overdueAmount > 100000 ? '#dc2626' : '#6b7280' }}>
-                  ₴ {(row.overdueAmount / 1000).toFixed(0)} тис
-                </Td>
+                <Td style={{ color: '#6b7280' }}>₴ {(row.overdueAmount / 1000).toFixed(0)} тис</Td>
               </tr>
             ))}
           </tbody>
