@@ -6,8 +6,11 @@ import { Card } from '../../components/Card/Card';
 import { Button } from '../../components/Button/Button';
 import { TableContainer, TableHeader, Table, Th, Td } from '../Dashboard/Dashboard.styled';
 import { FilterBar } from '../Requests/Requests.styled';
-import { Download, TrendingUp, Calendar, Loader2 } from 'lucide-react';
+import { Download, TrendingUp, Calendar, Loader2, FileText, FileSpreadsheet } from 'lucide-react';
 import { api, Request } from '../../services/api';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface ReportData {
   month: string;
@@ -39,11 +42,7 @@ export const Reports: React.FC = () => {
   };
 
   const generateReport = (): ReportData[] => {
-    const months = [
-      t.reports.month?.split(' ')[0] || 'Січ',
-      'Лют', 'Бер', 'Кві', 'Тра', 'Чер',
-      'Лип', 'Сер', 'Вер', 'Жов', 'Лис', 'Гру'
-    ];
+    const months = ['Січ', 'Лют', 'Бер', 'Кві', 'Тра', 'Чер', 'Лип', 'Сер', 'Вер', 'Жов', 'Лис', 'Гру'];
     const currentYear = new Date().getFullYear();
     
     return months.slice(0, 5).map((month, index) => {
@@ -91,6 +90,49 @@ export const Reports: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const exportToExcel = () => {
+    const data = report.map(row => ({
+      [t.reports.month]: row.month,
+      [t.reports.amount]: row.totalFinanced,
+      [t.reports.count]: row.requestsCount,
+      [t.reports.average]: row.avgAmount,
+      [t.reports.overdue]: row.overdueAmount
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Financial Report');
+    XLSX.writeFile(wb, `financial_report_${new Date().toISOString().slice(0,19)}.xlsx`);
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text(t.reports.title, 14, 20);
+    
+    doc.setFontSize(12);
+    doc.text(`Дата: ${new Date().toLocaleDateString()}`, 14, 35);
+    
+    const tableData = report.map(row => [
+      row.month,
+      `${(row.totalFinanced / 1000000).toFixed(2)} млн ₴`,
+      row.requestsCount.toString(),
+      `${(row.avgAmount / 1000).toFixed(0)} тис ₴`,
+      `${(row.overdueAmount / 1000).toFixed(0)} тис ₴`
+    ]);
+    
+    (doc as any).autoTable({
+      head: [[t.reports.month, t.reports.amount, t.reports.count, t.reports.average, t.reports.overdue]],
+      body: tableData,
+      startY: 50,
+      theme: 'striped',
+      headStyles: { fillColor: [37, 99, 235] }
+    });
+    
+    doc.save(`financial_report_${new Date().toISOString().slice(0,19)}.pdf`);
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -105,9 +147,17 @@ export const Reports: React.FC = () => {
     <Layout>
       <DashboardHeader>
         <Title>{t.reports.title}</Title>
-        <Button variant="outline" icon={<Download size={16} />} onClick={exportToCSV}>
-          {t.reports.exportReport}
-        </Button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Button variant="outline" icon={<FileSpreadsheet size={16} />} onClick={exportToExcel}>
+            Excel
+          </Button>
+          <Button variant="outline" icon={<FileText size={16} />} onClick={exportToPDF}>
+            PDF
+          </Button>
+          <Button variant="outline" icon={<Download size={16} />} onClick={exportToCSV}>
+            CSV
+          </Button>
+        </div>
       </DashboardHeader>
 
       <FilterBar>
