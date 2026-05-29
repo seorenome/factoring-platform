@@ -14,6 +14,7 @@ import { Reports } from './pages/Reports/Reports';
 import { AuditLog } from './pages/AuditLog/AuditLog';
 import { Login } from './pages/Login/Login';
 import { Profile } from './pages/Profile/Profile';
+import { Settings } from './pages/Settings/Settings';
 import { PlaceholderPage } from './pages/PlaceholderPage/PlaceholderPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -44,7 +45,7 @@ export default function App() {
             <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
             <Route path="/audit" element={<PrivateRoute><AuditLog /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-            <Route path="/settings" element={<PrivateRoute><PlaceholderPage title="Налаштування" /></PrivateRoute>} />
+            <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

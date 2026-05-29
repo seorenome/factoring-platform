@@ -16,3 +16,23 @@ html, body {
 *, *::before, *::after {
   box-sizing: border-box;
 }
+
+/* Забороняємо курсор-паличку на всіх елементах, крім полів вводу */
+* {
+  cursor: default;
+}
+
+/* Тільки поля вводу мають курсор-паличку */
+input, textarea, [contenteditable="true"] {
+  cursor: text;
+}
+
+/* Кнопки та посилання мають курсор-руку */
+button, a, [role="button"], .clickable {
+  cursor: pointer;
+}
+
+/* Текст можна виділяти (не впливає на курсор) */
+body, p, div, span, li, td, th, label, h1, h2, h3, h4, h5, h6 {
+  user-select: text;
+}

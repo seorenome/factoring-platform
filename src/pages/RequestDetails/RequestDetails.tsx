@@ -77,6 +77,23 @@ export const RequestDetails: React.FC = () => {
     }
   };
 
+  // Функція для визначення активного статусу в таймлайні
+  const getTimelineStatus = () => {
+    if (!request) return 0;
+    switch (request.status) {
+      case 'pending':
+        return 2; // Рішення фактора (активний)
+      case 'approved':
+        return 3; // Підписання (пройдено)
+      case 'rejected':
+        return 0; // Відхилено
+      default:
+        return 0;
+    }
+  };
+
+  const timelineStatus = getTimelineStatus();
+
   if (loading) {
     return (
       <Layout>
@@ -100,6 +117,12 @@ export const RequestDetails: React.FC = () => {
 
   const financingAmount = (request.amount * financingPercent) / 100;
   const commissionAmount = (request.amount * commissionRate) / 100;
+
+  // Форматування дати для таймлайну
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleString();
+  };
 
   return (
     <Layout>
@@ -160,7 +183,7 @@ export const RequestDetails: React.FC = () => {
               </DataItem>
               <DataItem>
                 <DataLabel>{t.requests.createdAt}</DataLabel>
-                <DataValue>{new Date(request.createdAt).toLocaleString()}</DataValue>
+                <DataValue>{formatDate(request.createdAt)}</DataValue>
               </DataItem>
             </DataGrid>
           </SectionCard>
@@ -173,7 +196,7 @@ export const RequestDetails: React.FC = () => {
                   <FileText color="#6b7280" />
                   <div>
                     <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>Рахунок-фактура №{request.requestNumber}.pdf</div>
-                    <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>{t.common.loading} {new Date(request.createdAt).toLocaleDateString()}</div>
+                    <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>{t.common.loading} {formatDate(request.createdAt).split(',')[0]}</div>
                   </div>
                 </div>
                 <Button variant="outline" icon={<Download size={16} />}>{t.common.download}</Button>
@@ -214,43 +237,122 @@ export const RequestDetails: React.FC = () => {
           )}
 
           <SectionCard>
-            <SectionTitle>{t.requests.processStatus}</SectionTitle>
+            <SectionTitle>Статус процесу</SectionTitle>
             <Timeline>
-              <TimelineItem $active>
-                <TimelineDot $completed>
-                  <Check size={14} color="white" />
+              {/* Етап 1: Заявка створена */}
+              <TimelineItem $active={timelineStatus >= 0}>
+                <TimelineDot $completed={timelineStatus >= 0} $active={timelineStatus === 0}>
+                  {timelineStatus >= 0 && <Check size={14} color="white" />}
                 </TimelineDot>
                 <TimelineContent>
-                  <DataValue>{t.requests.createdAt}</DataValue>
-                  <DataLabel style={{ display: 'block' }}>{new Date(request.createdAt).toLocaleString()}</DataLabel>
+                  <DataValue style={{ color: timelineStatus >= 0 ? '#111827' : '#9ca3af' }}>
+                    Заявка створена
+                  </DataValue>
+                  <DataLabel style={{ display: 'block', color: '#6b7280' }}>
+                    {formatDate(request.createdAt)}
+                  </DataLabel>
                 </TimelineContent>
               </TimelineItem>
-              
-              <TimelineItem $active={request.status === 'approved'}>
-                <TimelineDot $completed={request.status === 'approved'} $active={request.status === 'pending'}>
-                  {request.status === 'approved' && <Check size={14} color="white" />}
+
+              {/* Етап 2: KYC/AML перевірка */}
+              <TimelineItem $active={timelineStatus >= 1}>
+                <TimelineDot $completed={timelineStatus >= 1} $active={timelineStatus === 1}>
+                  {timelineStatus >= 1 && <Check size={14} color="white" />}
                 </TimelineDot>
                 <TimelineContent>
-                  <DataValue style={{ color: request.status === 'approved' ? '#111827' : '#9ca3af' }}>
-                    {request.status === 'approved' ? t.requests.approved : t.requests.decision}
+                  <DataValue style={{ color: timelineStatus >= 1 ? '#111827' : '#9ca3af' }}>
+                    KYC/AML перевірка
                   </DataValue>
-                  {request.status === 'pending' && (
-                    <DataLabel style={{ display: 'block' }}>{t.dashboard.pendingReview}</DataLabel>
+                  {timelineStatus >= 1 && (
+                    <DataLabel style={{ display: 'block', color: '#6b7280' }}>
+                      {formatDate(request.createdAt)}
+                    </DataLabel>
+                  )}
+                  {timelineStatus < 1 && (
+                    <DataLabel style={{ display: 'block', color: '#9ca3af' }}>
+                      Очікує перевірку
+                    </DataLabel>
                   )}
                 </TimelineContent>
               </TimelineItem>
 
-              <TimelineItem>
-                <TimelineDot />
+              {/* Етап 3: Рішення фактора */}
+              <TimelineItem $active={timelineStatus >= 2}>
+                <TimelineDot $completed={timelineStatus >= 2} $active={timelineStatus === 2}>
+                  {timelineStatus >= 2 && <Check size={14} color="white" />}
+                </TimelineDot>
                 <TimelineContent>
-                  <DataValue style={{ color: '#9ca3af' }}>{t.common.sign}</DataValue>
+                  <DataValue style={{ 
+                    color: timelineStatus >= 2 ? '#111827' : (timelineStatus === 1 ? '#2563eb' : '#9ca3af')
+                  }}>
+                    Рішення фактора
+                  </DataValue>
+                  {timelineStatus === 1 && (
+                    <DataLabel style={{ display: 'block', color: '#f59e0b' }}>
+                      Очікує на встановлення умов
+                    </DataLabel>
+                  )}
+                  {timelineStatus >= 2 && (
+                    <DataLabel style={{ display: 'block', color: '#6b7280' }}>
+                      {request.status === 'approved' ? 'Схвалено' : 'Оброблено'}
+                    </DataLabel>
+                  )}
+                  {timelineStatus < 1 && (
+                    <DataLabel style={{ display: 'block', color: '#9ca3af' }}>
+                      Очікує розгляду
+                    </DataLabel>
+                  )}
                 </TimelineContent>
               </TimelineItem>
-              
-              <TimelineItem>
-                <TimelineDot />
+
+              {/* Етап 4: Підписання документів (КЕП) */}
+              <TimelineItem $active={timelineStatus >= 3}>
+                <TimelineDot $completed={timelineStatus >= 3} $active={timelineStatus === 3}>
+                  {timelineStatus >= 3 && <Check size={14} color="white" />}
+                </TimelineDot>
                 <TimelineContent>
-                  <DataValue style={{ color: '#9ca3af' }}>{t.dashboard.totalFinanced}</DataValue>
+                  <DataValue style={{ color: timelineStatus >= 3 ? '#111827' : '#9ca3af' }}>
+                    Підписання документів (КЕП)
+                  </DataValue>
+                  {timelineStatus < 3 && timelineStatus >= 2 && (
+                    <DataLabel style={{ display: 'block', color: '#9ca3af' }}>
+                      Очікує підписання
+                    </DataLabel>
+                  )}
+                </TimelineContent>
+              </TimelineItem>
+
+              {/* Етап 5: Виплата фінансування */}
+              <TimelineItem $active={timelineStatus >= 4}>
+                <TimelineDot $completed={timelineStatus >= 4} $active={timelineStatus === 4}>
+                  {timelineStatus >= 4 && <Check size={14} color="white" />}
+                </TimelineDot>
+                <TimelineContent>
+                  <DataValue style={{ color: timelineStatus >= 4 ? '#111827' : '#9ca3af' }}>
+                    Виплата фінансування
+                  </DataValue>
+                  {timelineStatus >= 3 && timelineStatus < 4 && (
+                    <DataLabel style={{ display: 'block', color: '#9ca3af' }}>
+                      Очікує виплату
+                    </DataLabel>
+                  )}
+                </TimelineContent>
+              </TimelineItem>
+
+              {/* Етап 6: Погашення */}
+              <TimelineItem $active={timelineStatus >= 5}>
+                <TimelineDot $completed={timelineStatus >= 5} $active={timelineStatus === 5}>
+                  {timelineStatus >= 5 && <Check size={14} color="white" />}
+                </TimelineDot>
+                <TimelineContent>
+                  <DataValue style={{ color: timelineStatus >= 5 ? '#111827' : '#9ca3af' }}>
+                    Погашення заборгованості
+                  </DataValue>
+                  {timelineStatus >= 4 && timelineStatus < 5 && (
+                    <DataLabel style={{ display: 'block', color: '#9ca3af' }}>
+                      Очікує оплату дебітора
+                    </DataLabel>
+                  )}
                 </TimelineContent>
               </TimelineItem>
             </Timeline>
