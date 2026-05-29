@@ -15,7 +15,6 @@ import { AuditLog } from './pages/AuditLog/AuditLog';
 import { Login } from './pages/Login/Login';
 import { Profile } from './pages/Profile/Profile';
 import { Settings } from './pages/Settings/Settings';
-import { PlaceholderPage } from './pages/PlaceholderPage/PlaceholderPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('token');
